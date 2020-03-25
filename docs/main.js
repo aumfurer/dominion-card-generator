@@ -167,25 +167,7 @@ function initCardImageGenerator() {
             return context.measureText(line.replace(iconWithNumbersPattern, iconReplacedWithSpaces)).width;
         }
 
-        function getIconListing(icon) {
-            return icons[icon] || icons["\\" + icon];
-        }
-
         var shadowDistance = 10;
-
-        function writeLineWithIconsReplacedWithSpaces(line, x, y, scale, family, boldSize) {
-            let painter = new Painter(context, boldLinePatternWords, images, numberFirstIcon, shadowDistance);
-            return painter.writeLineWithIconsReplacedWithSpaces(line, x, y, scale, family, boldSize)
-        }
-
-        function writeSingleLine(line, x, y, maxWidth, initialSize, family) {
-            family = family || "TrajanPro";
-            var size = (initialSize || 85) + 2;
-            do {
-                context.font = (size -= 2) + "pt " + family;
-            } while (maxWidth && getWidthOfLineWithIconsReplacedWithSpaces(line) > maxWidth);
-            writeLineWithIconsReplacedWithSpaces(line, x - getWidthOfLineWithIconsReplacedWithSpaces(line) / 2, y, size / 90, family);
-        }
 
         function writeDescription(elementID, xCenter, yCenter, maxWidth, maxHeight, boldSize) {
             rebuildBoldLinePatternWords();
@@ -264,7 +246,8 @@ function initCardImageGenerator() {
                 if (line === "-") //horizontal bar
                     context.fillRect(xCenter / 2, y - size * 0.375 - 5, xCenter, 10);
                 else if (line.length)
-                    writeLineWithIconsReplacedWithSpaces(line, xCenter - widthsPerLine[i] / 2, y, size / 96, "Times New Roman", boldSize);
+                    new Painter(context, boldLinePatternWords, images, numberFirstIcon, shadowDistance)
+                        .writeLineWithIconsReplacedWithSpaces(line, xCenter - widthsPerLine[i] / 2, y, size / 96, "Times New Roman", boldSize)
                 //else empty line with nothing to draw
                 y += heightsPerLine[i];
             }
@@ -396,268 +379,274 @@ function initCardImageGenerator() {
             }
         }
 
-        if (templateSize == 0) { //card
-            drawPicture(704, 706, 1150, 835);
-            removeCorners(1403, 2151, 100);
+        function actuallyDraw() {
 
-            context.drawImage(getRecoloredImage(0, 0), 0, 0); //CardColorOne
-            if (normalColorCurrentIndices[1] > 0) { //two colors are different
-                let splitPosition = document.getElementById("color2split").value;
-                context.drawImage(getRecoloredImage(!differentIntensities ? splitPosition : 12, 1), 0, 0); //CardColorTwo
-            }
-            context.drawImage(getRecoloredImage(2, 0, 6), 0, 0); //CardGray
-            context.drawImage(getRecoloredImage(16, 0, 9), 0, 0); //CardBrown
-            if (normalColorCurrentIndices[0] > 0 && !isEachColorDark[0] && normalColorCurrentIndices[1] == 0) //single (non-Action, non-Night) color
-                context.drawImage(images[3], 44, 1094); //DescriptionFocus
+            const painter = new Painter(context, boldLinePatternWords, images, numberFirstIcon, shadowDistance);
 
-            if (travellerTypesPattern.test(typeLine)) {
-                context.save();
-                context.globalCompositeOperation = "luminosity";
-                if (isEachColorDark[0])
-                    context.globalAlpha = 0.33;
-                context.drawImage(images[4], 524, 1197); //Traveller
-                context.restore();
-            }
+            if (templateSize == 0) { //card
+                drawPicture(704, 706, 1150, 835);
+                removeCorners(1403, 2151, 100);
 
-            context.textAlign = "center";
-            context.textBaseline = "middle";
-            //context.font = "small-caps" + context.font;
-            if (heirloomLine) {
-                context.drawImage(images[13], 97, 1720); //Heirloom banner
-                writeSingleLine(heirloomLine, 701, 1799, 1040, 58, "Times New Roman");
-            }
-            if (isEachColorDark[1])
-                context.fillStyle = "white";
-            writeSingleLine(document.getElementById("title").value, 701, 215, previewLine ? 800 : 1180, 75);
-            if (typeLine.split(" - ").length >= 4) {
-                let types2 = typeLine.split(" - ");
-                let types1 = types2.splice(0, Math.ceil(types2.length / 2));
-                let left = priceLine ? 750 + 65 * (numberPriceIcons - 1) : 701;
-                let right = priceLine ? 890 - 65 * (numberPriceIcons - 1) : 1180;
-                writeSingleLine(types1.join(" - ") + " -", left, 1922 - 26, right, 42);
-                writeSingleLine(types2.join(" - "), left, 1922 + 26, right, 42);
-            } else {
-                if (expansion.height > 0 && expansion.width > 0) {
-                    let left = priceLine ? 730 + 65 * (numberPriceIcons - 1) : 701;
-                    let right = priceLine ? 800 - 65 * (numberPriceIcons - 1) : 900;
-                    writeSingleLine(typeLine, left, 1922, right, 64);
-                } else {
-                    let left = priceLine ? 750 + 125 * (numberPriceIcons - 1) : 701;
-                    let right = priceLine ? 890 - 85 * (numberPriceIcons - 1) : 1180;
-                    writeSingleLine(typeLine, left, 1922, right, 64);
+                context.drawImage(getRecoloredImage(0, 0), 0, 0); //CardColorOne
+                if (normalColorCurrentIndices[1] > 0) { //two colors are different
+                    let splitPosition = document.getElementById("color2split").value;
+                    context.drawImage(getRecoloredImage(!differentIntensities ? splitPosition : 12, 1), 0, 0); //CardColorTwo
                 }
-            }
-            if (priceLine)
-                writeLineWithIconsReplacedWithSpaces(priceLine + " ", 153, 1940, 85 / 90, "Minion"); //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
-            if (previewLine) {
-                writeSingleLine(previewLine += " ", 223, 210, 0, 0, "Minion");
-                writeSingleLine(previewLine, 1203, 210, 0, 0, "Minion");
-            }
-            context.fillStyle = (isEachColorDark[0]) ? "white" : "black";
-            if (!heirloomLine)
-                writeDescription("description", 701, 1500, 960, 660, 64);
-            else
-                writeDescription("description", 701, 1450, 960, 560, 64);
-            writeIllustrationCredit(150, 2038, "white", "");
-            writeCreatorCredit(1253, 2038, "white", "");
+                context.drawImage(getRecoloredImage(2, 0, 6), 0, 0); //CardGray
+                context.drawImage(getRecoloredImage(16, 0, 9), 0, 0); //CardBrown
+                if (normalColorCurrentIndices[0] > 0 && !isEachColorDark[0] && normalColorCurrentIndices[1] == 0) //single (non-Action, non-Night) color
+                    context.drawImage(images[3], 44, 1094); //DescriptionFocus
 
-            drawExpansionIcon(1230, 1920, 80, 80);
+                if (travellerTypesPattern.test(typeLine)) {
+                    context.save();
+                    context.globalCompositeOperation = "luminosity";
+                    if (isEachColorDark[0])
+                        context.globalAlpha = 0.33;
+                    context.drawImage(images[4], 524, 1197); //Traveller
+                    context.restore();
+                }
 
-        } else if (templateSize == 1) { //event/landscape
-            drawPicture(1075, 584, 1887, 730);
-            removeCorners(2151, 1403, 100);
-
-            context.drawImage(getRecoloredImage(6, 0), 0, 0); //EventColorOne
-            if (heirloomLine)
-                context.drawImage(images[14], 146, 832); //EventHeirloom
-            if (normalColorCurrentIndices[1] > 0) //two colors are different
-                context.drawImage(getRecoloredImage(7, 1), 0, 0); //EventColorTwo
-            context.drawImage(getRecoloredImage(8, 0, 6), 0, 0); //EventUncoloredDetails
-            context.drawImage(getRecoloredImage(15, 0, 9), 0, 0); //EventBar
-
-            //no Traveller
-
-            context.textAlign = "center";
-            context.textBaseline = "middle";
-            //context.font = "small-caps" + context.font;
-            if (heirloomLine)
-                writeSingleLine(heirloomLine, 1074, 900, 1600, 58, "Times New Roman");
-            if (isEachColorDark[0])
-                context.fillStyle = "white";
-            writeSingleLine(document.getElementById("title").value, 1075, 165, 780, 70);
-
-            if (typeLine) {
-                context.save();
-                context.translate(1903, 240);
-                context.rotate(45 * Math.PI / 180);
-                context.scale(1, 0.8); //yes, the letters are shorter
-                writeSingleLine(typeLine, 0, 0, 283, 64);
-                context.restore();
-            }
-
-            if (priceLine)
-                writeLineWithIconsReplacedWithSpaces(priceLine + " ", 130, 205, 85 / 90, "Minion"); //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
-            writeDescription("description", 1075, 1107, 1600, 283, 70);
-            writeIllustrationCredit(181, 1272, "black", "bold ");
-            writeCreatorCredit(1969, 1272, "black", "bold ");
-
-            drawExpansionIcon(1930, 1190, 80, 80);
-
-        } else if (templateSize == 2) { //double card
-            drawPicture(704, 1075, 1150, 564);
-            removeCorners(1403, 2151, 100);
-
-            if (!recoloredImages[9]) recoloredImages[10] = false;
-            context.drawImage(getRecoloredImage(9, 0), 0, 0); //DoubleColorOne
-            if (!isEachColorDark[0])
-                context.drawImage(images[3], 44, 1330, images[3].width, images[3].height * 2 / 3); //DescriptionFocus
-            context.save();
-            context.rotate(Math.PI);
-            context.drawImage(getRecoloredImage(10, (normalColorCurrentIndices[1] > 0) ? 1 : 0), -1403, -2151); //DoubleColorOne again, but rotated
-            if (!isEachColorDark[1])
-                context.drawImage(images[3], 44 - 1403, 1330 - 2151, images[3].width, images[3].height * 2 / 3); //DescriptionFocus
-            context.restore();
-            context.drawImage(images[11], 0, 0); //DoubleUncoloredDetails //todo
-
-            function drawHalfCard(t, l, p, d, colorID) {
                 context.textAlign = "center";
                 context.textBaseline = "middle";
                 //context.font = "small-caps" + context.font;
-                //writeSingleLine(document.getElementById(l).value, 701, 215, 1180, 75);
-
-                var recolorFactors;
-                if (normalColorCurrentIndices[colorID] >= normalColorCustomIndices[colorID])
-                    recolorFactors = recolorFactorList[colorID];
+                if (heirloomLine) {
+                    context.drawImage(images[13], 97, 1720); //Heirloom banner
+                    painter.writeSingleLine(heirloomLine, 701, 1799, 1040, 58, "Times New Roman");
+                }
+                if (isEachColorDark[1])
+                    context.fillStyle = "white";
+                painter.writeSingleLine(document.getElementById("title").value, 701, 215, previewLine ? 800 : 1180, 75);
+                if (typeLine.split(" - ").length >= 4) {
+                    let types2 = typeLine.split(" - ");
+                    let types1 = types2.splice(0, Math.ceil(types2.length / 2));
+                    let left = priceLine ? 750 + 65 * (numberPriceIcons - 1) : 701;
+                    let right = priceLine ? 890 - 65 * (numberPriceIcons - 1) : 1180;
+                    painter.writeSingleLine(types1.join(" - ") + " -", left, 1922 - 26, right, 42);
+                    painter.writeSingleLine(types2.join(" - "), left, 1922 + 26, right, 42);
+                } else {
+                    if (expansion.height > 0 && expansion.width > 0) {
+                        let left = priceLine ? 730 + 65 * (numberPriceIcons - 1) : 701;
+                        let right = priceLine ? 800 - 65 * (numberPriceIcons - 1) : 900;
+                        painter.writeSingleLine(typeLine, left, 1922, right, 64);
+                    } else {
+                        let left = priceLine ? 750 + 125 * (numberPriceIcons - 1) : 701;
+                        let right = priceLine ? 890 - 85 * (numberPriceIcons - 1) : 1180;
+                        painter.writeSingleLine(typeLine, left, 1922, right, 64);
+                    }
+                }
+                if (priceLine)
+                    painter.writeLineWithIconsReplacedWithSpaces(priceLine + " ", 153, 1940, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+                if (previewLine) {
+                    painter.writeSingleLine(previewLine += " ", 223, 210, 0, 0, "Minion");
+                    painter.writeSingleLine(previewLine, 1203, 210, 0, 0, "Minion");
+                }
+                context.fillStyle = (isEachColorDark[0]) ? "white" : "black";
+                if (!heirloomLine)
+                    writeDescription("description", 701, 1500, 960, 660, 64);
                 else
-                    recolorFactors = normalColorFactorLists[normalColorCurrentIndices[colorID] - colorID][1];
+                    writeDescription("description", 701, 1450, 960, 560, 64);
+                writeIllustrationCredit(150, 2038, "white", "");
+                writeCreatorCredit(1253, 2038, "white", "");
+
+                drawExpansionIcon(1230, 1920, 80, 80);
+
+            } else if (templateSize == 1) { //event/landscape
+                drawPicture(1075, 584, 1887, 730);
+                removeCorners(2151, 1403, 100);
+
+                context.drawImage(getRecoloredImage(6, 0), 0, 0); //EventColorOne
+                if (heirloomLine)
+                    context.drawImage(images[14], 146, 832); //EventHeirloom
+                if (normalColorCurrentIndices[1] > 0) //two colors are different
+                    context.drawImage(getRecoloredImage(7, 1), 0, 0); //EventColorTwo
+                context.drawImage(getRecoloredImage(8, 0, 6), 0, 0); //EventUncoloredDetails
+                context.drawImage(getRecoloredImage(15, 0, 9), 0, 0); //EventBar
+
+                //no Traveller
+
+                context.textAlign = "center";
+                context.textBaseline = "middle";
+                //context.font = "small-caps" + context.font;
+                if (heirloomLine)
+                    painter.writeSingleLine(heirloomLine, 1074, 900, 1600, 58, "Times New Roman");
+                if (isEachColorDark[0])
+                    context.fillStyle = "white";
+                painter.writeSingleLine(document.getElementById("title").value, 1075, 165, 780, 70);
+
+                if (typeLine) {
+                    context.save();
+                    context.translate(1903, 240);
+                    context.rotate(45 * Math.PI / 180);
+                    context.scale(1, 0.8); //yes, the letters are shorter
+                    painter.writeSingleLine(typeLine, 0, 0, 283, 64);
+                    context.restore();
+                }
+
+                if (priceLine)
+                    painter.writeLineWithIconsReplacedWithSpaces(priceLine + " ", 130, 205, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+                writeDescription("description", 1075, 1107, 1600, 283, 70);
+                writeIllustrationCredit(181, 1272, "black", "bold ");
+                writeCreatorCredit(1969, 1272, "black", "bold ");
+
+                drawExpansionIcon(1930, 1190, 80, 80);
+
+            } else if (templateSize == 2) { //double card
+                drawPicture(704, 1075, 1150, 564);
+                removeCorners(1403, 2151, 100);
+
+                if (!recoloredImages[9]) recoloredImages[10] = false;
+                context.drawImage(getRecoloredImage(9, 0), 0, 0); //DoubleColorOne
+                if (!isEachColorDark[0])
+                    context.drawImage(images[3], 44, 1330, images[3].width, images[3].height * 2 / 3); //DescriptionFocus
+                context.save();
+                context.rotate(Math.PI);
+                context.drawImage(getRecoloredImage(10, (normalColorCurrentIndices[1] > 0) ? 1 : 0), -1403, -2151); //DoubleColorOne again, but rotated
+                if (!isEachColorDark[1])
+                    context.drawImage(images[3], 44 - 1403, 1330 - 2151, images[3].width, images[3].height * 2 / 3); //DescriptionFocus
+                context.restore();
+                context.drawImage(images[11], 0, 0); //DoubleUncoloredDetails //todo
+
+                function drawHalfCard(t, l, p, d, colorID) {
+                    context.textAlign = "center";
+                    context.textBaseline = "middle";
+                    //context.font = "small-caps" + context.font;
+                    //writeSingleLine(document.getElementById(l).value, 701, 215, 1180, 75);
+
+                    var recolorFactors;
+                    if (normalColorCurrentIndices[colorID] >= normalColorCustomIndices[colorID])
+                        recolorFactors = recolorFactorList[colorID];
+                    else
+                        recolorFactors = normalColorFactorLists[normalColorCurrentIndices[colorID] - colorID][1];
+
+                    context.save();
+                    var title = document.getElementById(l).value;
+                    var size = 75 + 2;
+                    do {
+                        context.font = (size -= 2) + "pt TrajanPro";
+                    } while (context.measureText(title).width > 750);
+                    context.textAlign = "left";
+                    context.fillStyle = "rgb(" + Math.round(recolorFactors[0] * 224) + "," + Math.round(recolorFactors[1] * 224) + "," + Math.round(recolorFactors[2] * 224) + ")";
+                    context.lineWidth = 15;
+                    if (isEachColorDark[colorID])
+                        context.strokeStyle = "white";
+                    context.strokeText(title, 150, 1287);
+                    context.fillText(title, 150, 1287);
+                    context.restore();
+
+                    if (isEachColorDark[colorID])
+                        context.fillStyle = "white";
+                    painter.writeSingleLine(t, p ? 750 : 701, 1922, p ? 890 : 1190, 64);
+                    if (p)
+                        painter.writeLineWithIconsReplacedWithSpaces(p + " ", 153, 1940, 85 / 90, "Minion", undefined)
+                    writeDescription(d, 701, 1600, 960, 460, 64);
+                    context.restore();
+                }
 
                 context.save();
-                var title = document.getElementById(l).value;
-                var size = 75 + 2;
-                do {
-                    context.font = (size -= 2) + "pt TrajanPro";
-                } while (context.measureText(title).width > 750);
-                context.textAlign = "left";
-                context.fillStyle = "rgb(" + Math.round(recolorFactors[0] * 224) + "," + Math.round(recolorFactors[1] * 224) + "," + Math.round(recolorFactors[2] * 224) + ")";
-                context.lineWidth = 15;
-                if (isEachColorDark[colorID])
-                    context.strokeStyle = "white";
-                context.strokeText(title, 150, 1287);
-                context.fillText(title, 150, 1287);
-                context.restore();
+                drawHalfCard(typeLine, "title", priceLine, "description", 0);
+                context.save();
+                context.translate(1403, 2151); //bottom right corner
+                context.rotate(Math.PI);
+                shadowDistance = -shadowDistance;
+                drawHalfCard(heirloomLine, "title2", previewLine, "description2", (normalColorCurrentIndices[1] > 0) ? 1 : 0);
+                shadowDistance = -shadowDistance;
+                writeIllustrationCredit(150, 2038, "white", "");
+                writeCreatorCredit(1253, 2038, "white", "");
 
-                if (isEachColorDark[colorID])
-                    context.fillStyle = "white";
-                writeSingleLine(t, p ? 750 : 701, 1922, p ? 890 : 1190, 64);
-                if (p)
-                    writeLineWithIconsReplacedWithSpaces(p + " ", 153, 1940, 85 / 90, "Minion");
-                writeDescription(d, 701, 1600, 960, 460, 64);
-                context.restore();
-            }
-            context.save();
-            drawHalfCard(typeLine, "title", priceLine, "description", 0);
-            context.save();
-            context.translate(1403, 2151); //bottom right corner
-            context.rotate(Math.PI);
-            shadowDistance = -shadowDistance;
-            drawHalfCard(heirloomLine, "title2", previewLine, "description2", (normalColorCurrentIndices[1] > 0) ? 1 : 0);
-            shadowDistance = -shadowDistance;
-            writeIllustrationCredit(150, 2038, "white", "");
-            writeCreatorCredit(1253, 2038, "white", "");
+                drawExpansionIcon(1230, 1920, 80, 80);
 
-            drawExpansionIcon(1230, 1920, 80, 80);
+            } else if (templateSize == 3) { //base card
+                drawPicture(704, 1075, 1150, 1898);
+                removeCorners(1403, 2151, 100);
 
-        } else if (templateSize == 3) { //base card
-            drawPicture(704, 1075, 1150, 1898);
-            removeCorners(1403, 2151, 100);
+                context.drawImage(getRecoloredImage(20, 0), 0, 0); //CardColorOne
+                context.drawImage(getRecoloredImage(21, 0, 6), 0, 0); //CardGray
+                context.drawImage(getRecoloredImage(22, 0, 9), 0, 0); //CardBrown
 
-            context.drawImage(getRecoloredImage(20, 0), 0, 0); //CardColorOne
-            context.drawImage(getRecoloredImage(21, 0, 6), 0, 0); //CardGray
-            context.drawImage(getRecoloredImage(22, 0, 9), 0, 0); //CardBrown
-
-            context.textAlign = "center";
-            context.textBaseline = "middle";
-            //context.font = "small-caps" + context.font;
-            if (heirloomLine) {
-                context.drawImage(images[13], 97, 1720); //Heirloom banner
-                writeSingleLine(heirloomLine, 701, 1799, 1040, 58, "Times New Roman");
-            }
-            if (isEachColorDark[1])
-                context.fillStyle = "white";
-            writeSingleLine(document.getElementById("title").value, 701, 215, previewLine ? 800 : 1180, 75);
-            if (typeLine.split(" - ").length >= 4) {
-                let types2 = typeLine.split(" - ");
-                let types1 = types2.splice(0, Math.ceil(types2.length / 2));
-                writeSingleLine(types1.join(" - ") + " -", priceLine ? 750 : 701, 1945 - 26, priceLine ? 890 : 1180, 42);
-                writeSingleLine(types2.join(" - "), priceLine ? 750 : 701, 1945 + 26, priceLine ? 890 : 1180, 42);
-            } else {
-                if (expansion.height > 0 && expansion.width > 0) {
-                    writeSingleLine(typeLine, priceLine ? 730 : 701, 1945, priceLine ? 800 : 900, 64);
-                } else {
-                    writeSingleLine(typeLine, priceLine ? 750 : 701, 1945, priceLine ? 890 : 1180, 64);
+                context.textAlign = "center";
+                context.textBaseline = "middle";
+                //context.font = "small-caps" + context.font;
+                if (heirloomLine) {
+                    context.drawImage(images[13], 97, 1720); //Heirloom banner
+                    painter.writeSingleLine(heirloomLine, 701, 1799, 1040, 58, "Times New Roman");
                 }
+                if (isEachColorDark[1])
+                    context.fillStyle = "white";
+                painter.writeSingleLine(document.getElementById("title").value, 701, 215, previewLine ? 800 : 1180, 75);
+                if (typeLine.split(" - ").length >= 4) {
+                    let types2 = typeLine.split(" - ");
+                    let types1 = types2.splice(0, Math.ceil(types2.length / 2));
+                    painter.writeSingleLine(types1.join(" - ") + " -", priceLine ? 750 : 701, 1945 - 26, priceLine ? 890 : 1180, 42);
+                    painter.writeSingleLine(types2.join(" - "), priceLine ? 750 : 701, 1945 + 26, priceLine ? 890 : 1180, 42);
+                } else {
+                    if (expansion.height > 0 && expansion.width > 0) {
+                        painter.writeSingleLine(typeLine, priceLine ? 730 : 701, 1945, priceLine ? 800 : 900, 64);
+                    } else {
+                        painter.writeSingleLine(typeLine, priceLine ? 750 : 701, 1945, priceLine ? 890 : 1180, 64);
+                    }
+                }
+                if (priceLine)
+                    painter.writeLineWithIconsReplacedWithSpaces(priceLine + " ", 153, 1947, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+                if (previewLine) {
+                    painter.writeSingleLine(previewLine += " ", 223, 210, 0, 0, "Minion");
+                    painter.writeSingleLine(previewLine, 1203, 210, 0, 0, "Minion");
+                }
+                context.fillStyle = (isEachColorDark[0]) ? "white" : "black";
+                if (!heirloomLine)
+                    writeDescription("description", 701, 1060, 960, 1500, 64);
+                else
+                    writeDescription("description", 701, 1000, 960, 1400, 64);
+                writeIllustrationCredit(165, 2045, "white", "");
+                writeCreatorCredit(1225, 2045, "white", "");
+
+                drawExpansionIcon(1230, 1945, 80, 80);
+            } else if (templateSize == 4) { //pile marker
+                drawPicture(1075, 702, 1250, 870);
+                removeCorners(2151, 1403, 100);
+
+                context.drawImage(getRecoloredImage(24, 0, 6), 0, 0); //CardGray
+                context.drawImage(getRecoloredImage(23, 0), 0, 0); //CardColorOne
+
+                context.textAlign = "center";
+                context.textBaseline = "middle";
+
+                context.save();
+                if (isEachColorDark[1])
+                    context.fillStyle = "white";
+                context.rotate(Math.PI / 2);
+                painter.writeSingleLine(document.getElementById("title").value, 700, -1920, 500, 75);
+                context.restore();
+                context.save();
+                if (isEachColorDark[1])
+                    context.fillStyle = "white";
+                context.rotate(Math.PI * 3 / 2);
+                painter.writeSingleLine(document.getElementById("title").value, -700, 230, 500, 75);
+                context.restore();
+            } else if (templateSize == 5) { //player mat
+                drawPicture(464, 342, 928, 684);
+
+
+                context.drawImage(getRecoloredImage(25, 0, 6), 0, 0); //MatBannerTop
+                if (document.getElementById("description").value.trim().length > 0)
+                    context.drawImage(getRecoloredImage(26, 0, 6), 0, 0); //MatBannerBottom
+
+                context.textAlign = "center";
+                context.textBaseline = "middle";
+
+                if (isEachColorDark[1])
+                    context.fillStyle = "white";
+                painter.writeSingleLine(document.getElementById("title").value, 464, 96, 490, 55);
+
+                writeDescription("description", 464, 572, 740, 80, 44);
+
+                writeIllustrationCredit(15, 660, "white", "", 16);
+                writeCreatorCredit(913, 660, "white", "", 16);
+
+                drawExpansionIcon(888, 40, 40, 40);
+
             }
-            if (priceLine)
-                writeLineWithIconsReplacedWithSpaces(priceLine + " ", 153, 1947, 85 / 90, "Minion"); //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
-            if (previewLine) {
-                writeSingleLine(previewLine += " ", 223, 210, 0, 0, "Minion");
-                writeSingleLine(previewLine, 1203, 210, 0, 0, "Minion");
-            }
-            context.fillStyle = (isEachColorDark[0]) ? "white" : "black";
-            if (!heirloomLine)
-                writeDescription("description", 701, 1060, 960, 1500, 64);
-            else
-                writeDescription("description", 701, 1000, 960, 1400, 64);
-            writeIllustrationCredit(165, 2045, "white", "");
-            writeCreatorCredit(1225, 2045, "white", "");
-
-            drawExpansionIcon(1230, 1945, 80, 80);
-        } else if (templateSize == 4) { //pile marker
-            drawPicture(1075, 702, 1250, 870);
-            removeCorners(2151, 1403, 100);
-
-            context.drawImage(getRecoloredImage(24, 0, 6), 0, 0); //CardGray
-            context.drawImage(getRecoloredImage(23, 0), 0, 0); //CardColorOne
-
-            context.textAlign = "center";
-            context.textBaseline = "middle";
-
-            context.save();
-            if (isEachColorDark[1])
-                context.fillStyle = "white";
-            context.rotate(Math.PI / 2);
-            writeSingleLine(document.getElementById("title").value, 700, -1920, 500, 75);
-            context.restore();
-            context.save();
-            if (isEachColorDark[1])
-                context.fillStyle = "white";
-            context.rotate(Math.PI * 3 / 2);
-            writeSingleLine(document.getElementById("title").value, -700, 230, 500, 75);
-            context.restore();
-        } else if (templateSize == 5) { //player mat
-            drawPicture(464, 342, 928, 684);
-
-
-            context.drawImage(getRecoloredImage(25, 0, 6), 0, 0); //MatBannerTop
-            if (document.getElementById("description").value.trim().length > 0)
-                context.drawImage(getRecoloredImage(26, 0, 6), 0, 0); //MatBannerBottom
-
-            context.textAlign = "center";
-            context.textBaseline = "middle";
-
-            if (isEachColorDark[1])
-                context.fillStyle = "white";
-            writeSingleLine(document.getElementById("title").value, 464, 96, 490, 55);
-
-            writeDescription("description", 464, 572, 740, 80, 44);
-
-            writeIllustrationCredit(15, 660, "white", "", 16);
-            writeCreatorCredit(913, 660, "white", "", 16);
-
-            drawExpansionIcon(888, 40, 40, 40);
-
         }
-
+        actuallyDraw();
         //finish up
         //context.restore();
 
@@ -665,7 +654,6 @@ function initCardImageGenerator() {
 
         document.getElementById("load-indicator").setAttribute("style", "display:none;");
         canvases[0].parentNode.removeAttribute("data-status");
-        return;
     }
     var nextDrawInstruction = 0;
 

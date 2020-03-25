@@ -1,4 +1,4 @@
-const version = "Elekid.2";
+const version = "Feraligator.1";
 
 document.getElementsByClassName("heading-credits")[0].innerHTML = version;
 
@@ -173,7 +173,7 @@ class Painter {
                         "bold " + this.context.font;
                 }
                 if (this.context.font.includes('bold')) {
-                    let lastChar = word.substr(word.length - 1);
+                    const lastChar = word.substr(word.length - 1);
                     if ([",", ";", ".", "?", "!", ":"].includes(lastChar)) {
                         x += this.write(word.slice(0, -1), x, y, '');
                         this.setFontAttr('bold', false);
@@ -187,4 +187,19 @@ class Painter {
             })
         })
     }
+
+    getWidthOfLineWithIconsReplacedWithSpaces(line) {
+        return this.context.measureText(line.replace(iconWithNumbersPattern, iconReplacedWithSpaces)).width;
+    }
+
+    writeSingleLine(line, x, y, maxWidth, initialSize=85, family="TrajanPro") {
+        let size = initialSize  + 2;
+        do {
+            this.context.font = (size -= 2) + "pt " + family;
+        } while (maxWidth && this.getWidthOfLineWithIconsReplacedWithSpaces(line) > maxWidth);
+        x -= this.getWidthOfLineWithIconsReplacedWithSpaces(line) / 2;
+        this.writeLineWithIconsReplacedWithSpaces(line, x, y, size / 90, family)
+    }
+
+
 }
