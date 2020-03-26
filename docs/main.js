@@ -125,7 +125,7 @@ function initCardImageGenerator() {
         }
 
         function writeIllustrationCredit(x, y, color, bold, size = 31) {
-            var illustrationCredit = document.getElementById("credit").value;
+            const illustrationCredit = document.getElementById("credit").value;
             if (illustrationCredit) {
                 context.font = bold + size + "pt Times New Roman";
                 context.fillStyle = color;
@@ -135,7 +135,7 @@ function initCardImageGenerator() {
         }
 
         function writeCreatorCredit(x, y, color, bold, size = 31) {
-            var creatorCredit = document.getElementById("creator").value;
+            const creatorCredit = document.getElementById("creator").value;
             if (creatorCredit) {
                 context.textAlign = "right";
                 context.font = bold + size + "pt Times New Roman";
@@ -197,37 +197,6 @@ function initCardImageGenerator() {
             document.getElementById('color2splitselector').setAttribute("style", "display:none");
         }
 
-        function drawPicture(xCenter, yCenter, width, height) {
-            if (picture.height) {
-                var scale;
-                if (picture.width / width > picture.height / height) { //size of area to draw picture to
-                    scale = height / picture.height;
-                } else {
-                    scale = width / picture.width;
-                }
-
-                let sizeX = picture.width * scale * pictureZoom;
-                let sizeY = picture.height * scale * pictureZoom;
-                let spaceX = sizeX - width;
-                let spaceY = sizeY - height;
-                let moveX = parseFloat(pictureX) * spaceX / 2;
-                let moveY = parseFloat(pictureY) * spaceY / 2;
-
-                context.save();
-                context.translate(xCenter + moveX, yCenter + moveY);
-                context.scale(scale * pictureZoom, scale * pictureZoom);
-                context.drawImage(picture, picture.width / -2, picture.height / -2);
-                context.restore();
-            }
-        }
-
-        function removeCorners(width, height, radius) {
-            context.clearRect(0, 0, radius, radius);
-            context.clearRect(width - radius, 0, radius, radius);
-            context.clearRect(0, height - radius, radius, radius);
-            context.clearRect(width - radius, height - radius, radius, radius);
-        }
-
         function drawExpansionIcon(xCenter, yCenter, width, height) {
             if (expansion.height) {
                 var scale;
@@ -246,13 +215,19 @@ function initCardImageGenerator() {
 
         function actuallyDraw() {
 
-            const painter = new Painter(context, getExtraBoldWords(), images, numberFirstIcon);
+            const painter = new Painter(
+                context,
+                getExtraBoldWords(),
+                images,
+                numberFirstIcon,
+                {image: picture, x: parseFloat(pictureX), y: parseFloat(pictureY), zoom: pictureZoom}
+            );
 
             const descriptionStr = document.getElementById("description").value;
 
             if (templateSize === 0) { //card
-                drawPicture(704, 706, 1150, 835);
-                removeCorners(1403, 2151, 100);
+                painter.drawPicture(704, 706, 1150, 835);
+                painter.removeCorners(1403, 2151, 100);
 
                 context.drawImage(getRecoloredImage(0, 0), 0, 0); //CardColorOne
                 if (normalColorCurrentIndices[1] > 0) { //two colors are different
@@ -302,7 +277,7 @@ function initCardImageGenerator() {
                     }
                 }
                 if (priceLine)
-                    painter.writeLineWithIcons(priceLine + " ", 153, 1940, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+                    painter.writeLineWithIcons(priceLine + " ", 153, 1940, 85 / 90, "Minion"); //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
                 if (previewLine) {
                     painter.writeSingleLine(previewLine + " ", 223, 210, 0, 0, "Minion");
                     painter.writeSingleLine(previewLine + " ", 1203, 210, 0, 0, "Minion");
@@ -318,8 +293,8 @@ function initCardImageGenerator() {
                 drawExpansionIcon(1230, 1920, 80, 80);
 
             } else if (templateSize === 1) { //event/landscape
-                drawPicture(1075, 584, 1887, 730);
-                removeCorners(2151, 1403, 100);
+                painter.drawPicture(1075, 584, 1887, 730);
+                painter.removeCorners(2151, 1403, 100);
 
                 context.drawImage(getRecoloredImage(6, 0), 0, 0); //EventColorOne
                 if (heirloomLine)
@@ -358,8 +333,8 @@ function initCardImageGenerator() {
                 drawExpansionIcon(1930, 1190, 80, 80);
 
             } else if (templateSize === 2) { //double card
-                drawPicture(704, 1075, 1150, 564);
-                removeCorners(1403, 2151, 100);
+                painter.drawPicture(704, 1075, 1150, 564);
+                painter.removeCorners(1403, 2151, 100);
 
                 if (!recoloredImages[9]) recoloredImages[10] = false;
                 context.drawImage(getRecoloredImage(9, 0), 0, 0); //DoubleColorOne
@@ -424,8 +399,8 @@ function initCardImageGenerator() {
                 drawExpansionIcon(1230, 1920, 80, 80);
 
             } else if (templateSize === 3) { //base card
-                drawPicture(704, 1075, 1150, 1898);
-                removeCorners(1403, 2151, 100);
+                painter.drawPicture(704, 1075, 1150, 1898);
+                painter.removeCorners(1403, 2151, 100);
 
                 context.drawImage(getRecoloredImage(20, 0), 0, 0); //CardColorOne
                 context.drawImage(getRecoloredImage(21, 0, 6), 0, 0); //CardGray
@@ -469,8 +444,8 @@ function initCardImageGenerator() {
 
                 drawExpansionIcon(1230, 1945, 80, 80);
             } else if (templateSize === 4) { //pile marker
-                drawPicture(1075, 702, 1250, 870);
-                removeCorners(2151, 1403, 100);
+                painter.drawPicture(1075, 702, 1250, 870);
+                painter.removeCorners(2151, 1403, 100);
 
                 context.drawImage(getRecoloredImage(24, 0, 6), 0, 0); //CardGray
                 context.drawImage(getRecoloredImage(23, 0), 0, 0); //CardColorOne
@@ -491,8 +466,7 @@ function initCardImageGenerator() {
                 painter.writeSingleLine(document.getElementById("title").value, -700, 230, 500, 75);
                 context.restore();
             } else if (templateSize === 5) { //player mat
-                drawPicture(464, 342, 928, 684);
-
+                painter.drawPicture(464, 342, 928, 684);
 
                 context.drawImage(getRecoloredImage(25, 0, 6), 0, 0); //MatBannerTop
                 if (document.getElementById("description").value.trim().length > 0)

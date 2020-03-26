@@ -1,4 +1,4 @@
-const version = "Hunter";
+const version = "Hunter.3";
 
 document.getElementsByClassName("heading-credits")[0].innerHTML = version;
 
@@ -44,12 +44,15 @@ class Painter {
      * @param boldWordsExtra {String []}
      * @param images {Image []}
      * @param numberFirstIcon {number}
+     * @param picture {{image: Image, x: number, y: number, zoom: number}}
      */
-    constructor(context, boldWordsExtra, images, numberFirstIcon) {
+    constructor(context, boldWordsExtra, images, numberFirstIcon, picture) {
         this.context = context;
         this.boldLinePatternWords = this.buildBoldLinePatternWords(boldWordsExtra);
         this.images = images;
         this.numberFirstIcon = numberFirstIcon;
+        this.picture = picture;
+
         this.shadowDistance = 10
     }
 
@@ -301,5 +304,32 @@ class Painter {
             y += line.height;
         }
         this.context.fillStyle = "black";
+    }
+
+    drawPicture(xCenter, yCenter, width, height) {
+        const image = this.picture.image;
+        if (image.height) {
+            const scale = Math.max(height / image.height, width / image.width);
+
+            let sizeX = image.width * scale * this.picture.zoom;
+            let sizeY = image.height * scale * this.picture.zoom;
+            let spaceX = sizeX - width;
+            let spaceY = sizeY - height;
+            let moveX = this.picture.x * spaceX / 2;
+            let moveY = this.picture.y * spaceY / 2;
+
+            this.savingContext(()=>{
+                this.context.translate(xCenter + moveX, yCenter + moveY);
+                this.context.scale(scale * this.picture.zoom, scale * this.picture.zoom);
+                this.context.drawImage(image, image.width / -2, image.height / -2);
+            })
+        }
+    }
+
+    removeCorners(width, height, radius) {
+        this.context.clearRect(0, 0, radius, radius);
+        this.context.clearRect(width - radius, 0, radius, radius);
+        this.context.clearRect(0, height - radius, radius, radius);
+        this.context.clearRect(width - radius, height - radius, radius, radius);
     }
 }
