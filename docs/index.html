@@ -30,10 +30,23 @@
     <link rel="stylesheet" type="text/css" href="style.css">
 
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js');
+        const development = true;
+
+        if (development){
+            if(window.navigator && navigator.serviceWorker) {
+                navigator.serviceWorker.getRegistrations()
+                    .then(function(registrations) {
+                        for(let registration of registrations) {
+                            registration.unregister();
+                        }
+                    });
+            }
+        } else {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js');
+            }
         }
-        
+
         function initialize() {
             initCardImageGenerator();
             myFavorites = new Favorites( 'myFavorites' );

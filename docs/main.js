@@ -66,6 +66,7 @@ function initCardImageGenerator() {
     const canvases = document.getElementsByClassName("myCanvas");
     let images = [];
     let imagesLoaded = false;
+
     let recolorFactorList = [
 		[0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6],
 		[0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6]
@@ -124,26 +125,6 @@ function initCardImageGenerator() {
             return recoloredImages[imageID];
         }
 
-        function writeIllustrationCredit(x, y, color, bold, size = 31) {
-            const illustrationCredit = document.getElementById("credit").value;
-            if (illustrationCredit) {
-                context.font = bold + size + "pt Times New Roman";
-                context.fillStyle = color;
-                context.fillText(illustrationCredit, x, y);
-                context.fillStyle = "#000";
-            }
-        }
-
-        function writeCreatorCredit(x, y, color, bold, size = 31) {
-            const creatorCredit = document.getElementById("creator").value;
-            if (creatorCredit) {
-                context.textAlign = "right";
-                context.font = bold + size + "pt Times New Roman";
-                context.fillStyle = color;
-                context.fillText(creatorCredit, x, y);
-                context.fillStyle = "#000";
-            }
-        }
 
         if (!imagesLoaded) {
             imagesLoaded = images.every(img => img.complete);
@@ -199,12 +180,7 @@ function initCardImageGenerator() {
 
         function drawExpansionIcon(xCenter, yCenter, width, height) {
             if (expansion.height) {
-                var scale;
-                if (expansion.width / width < expansion.height / height) { //size of area to draw picture to
-                    scale = height / expansion.height;
-                } else {
-                    scale = width / expansion.width;
-                }
+                const scale = Math.min(height / expansion.height, width / expansion.width);
                 context.save();
                 context.translate(xCenter, yCenter);
                 context.scale(scale, scale);
@@ -215,15 +191,29 @@ function initCardImageGenerator() {
 
         function actuallyDraw() {
 
+            const fields = {
+                creator: document.getElementById("creator").value,
+                credit: document.getElementById("credit").value,
+            };
+            const pictureFields = {
+                image: picture,
+                x: parseFloat(pictureX),
+                y: parseFloat(pictureY),
+                zoom: pictureZoom
+            };
+
             const painter = new Painter(
                 context,
                 getExtraBoldWords(),
                 images,
                 numberFirstIcon,
-                {image: picture, x: parseFloat(pictureX), y: parseFloat(pictureY), zoom: pictureZoom}
+                pictureFields,
+                fields
             );
 
             const descriptionStr = document.getElementById("description").value;
+
+            painter.context.save();
 
             if (templateSize === 0) { //card
                 painter.drawPicture(704, 706, 1150, 835);
@@ -287,8 +277,8 @@ function initCardImageGenerator() {
                     painter.writeDescription(descriptionStr, 701, 1500, 960, 660, 64);
                 else
                     painter.writeDescription(descriptionStr, 701, 1450, 960, 560, 64);
-                writeIllustrationCredit(150, 2038, "white", "");
-                writeCreatorCredit(1253, 2038, "white", "");
+                painter.writeIllustrationCredit(150, 2038, "white", "");
+                painter.writeCreatorCredit(1253, 2038, "white", "");
 
                 drawExpansionIcon(1230, 1920, 80, 80);
 
@@ -327,8 +317,8 @@ function initCardImageGenerator() {
                 if (priceLine)
                     painter.writeLineWithIcons(priceLine + " ", 130, 205, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
                 painter.writeDescription(descriptionStr, 1075, 1107, 1600, 283, 70);
-                writeIllustrationCredit(181, 1272, "black", "bold ");
-                writeCreatorCredit(1969, 1272, "black", "bold ");
+                painter.writeIllustrationCredit(181, 1272, "black", "bold ");
+                painter.writeCreatorCredit(1969, 1272, "black", "bold ");
 
                 drawExpansionIcon(1930, 1190, 80, 80);
 
@@ -393,8 +383,8 @@ function initCardImageGenerator() {
                 const description2 = document.getElementById("description2").value;
                 drawHalfCard(heirloomLine, "title2", previewLine, description2, (normalColorCurrentIndices[1] > 0) ? 1 : 0);
                 painter.shadowDistance = -painter.shadowDistance;
-                writeIllustrationCredit(150, 2038, "white", "");
-                writeCreatorCredit(1253, 2038, "white", "");
+                painter.writeIllustrationCredit(150, 2038, "white", "");
+                painter.writeCreatorCredit(1253, 2038, "white", "");
 
                 drawExpansionIcon(1230, 1920, 80, 80);
 
@@ -439,8 +429,8 @@ function initCardImageGenerator() {
                     painter.writeDescription(descriptionStr, 701, 1060, 960, 1500, 64);
                 else
                     painter.writeDescription(descriptionStr, 701, 1000, 960, 1400, 64);
-                writeIllustrationCredit(165, 2045, "white", "");
-                writeCreatorCredit(1225, 2045, "white", "");
+                painter.writeIllustrationCredit(165, 2045, "white", "");
+                painter.writeCreatorCredit(1225, 2045, "white", "");
 
                 drawExpansionIcon(1230, 1945, 80, 80);
             } else if (templateSize === 4) { //pile marker
@@ -482,12 +472,12 @@ function initCardImageGenerator() {
                 painter.writeDescription(descriptionStr, 464, 572, 740, 80, 44);
                 painter.writeDescription(descriptionStr, 464, 572, 740, 80, 44);
 
-                writeIllustrationCredit(15, 660, "white", "", 16);
-                writeCreatorCredit(913, 660, "white", "", 16);
+                painter.writeIllustrationCredit(15, 660, "white", "", 16);
+                painter.writeCreatorCredit(913, 660, "white", "", 16);
 
                 drawExpansionIcon(888, 40, 40, 40);
-
             }
+            painter.context.restore()
         }
         actuallyDraw();
         //finish up
