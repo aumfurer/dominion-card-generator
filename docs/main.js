@@ -442,7 +442,7 @@ function initCardImageGenerator() {
                     }
                 }
                 if (priceLine)
-                    painter.writeLineWithIconsReplacedWithSpaces(priceLine + " ", 153, 1940, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+                    painter.writeLineWithIcons(priceLine + " ", 153, 1940, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
                 if (previewLine) {
                     painter.writeSingleLine(previewLine += " ", 223, 210, 0, 0, "Minion");
                     painter.writeSingleLine(previewLine, 1203, 210, 0, 0, "Minion");
@@ -490,7 +490,7 @@ function initCardImageGenerator() {
                 }
 
                 if (priceLine)
-                    painter.writeLineWithIconsReplacedWithSpaces(priceLine + " ", 130, 205, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+                    painter.writeLineWithIcons(priceLine + " ", 130, 205, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
                 painter.writeDescription(descriptionStr, 1075, 1107, 1600, 283, 70);
                 writeIllustrationCredit(181, 1272, "black", "bold ");
                 writeCreatorCredit(1969, 1272, "black", "bold ");
@@ -544,7 +544,7 @@ function initCardImageGenerator() {
                         context.fillStyle = "white";
                     painter.writeSingleLine(t, p ? 750 : 701, 1922, p ? 890 : 1190, 64);
                     if (p)
-                        painter.writeLineWithIconsReplacedWithSpaces(p + " ", 153, 1940, 85 / 90, "Minion", undefined)
+                        painter.writeLineWithIcons(p + " ", 153, 1940, 85 / 90, "Minion", undefined)
                     painter.writeDescription(d, 701, 1600, 960, 460, 64);
                     context.restore();
                 }
@@ -593,7 +593,7 @@ function initCardImageGenerator() {
                     }
                 }
                 if (priceLine)
-                    painter.writeLineWithIconsReplacedWithSpaces(priceLine + " ", 153, 1947, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+                    painter.writeLineWithIcons(priceLine + " ", 153, 1947, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
                 if (previewLine) {
                     painter.writeSingleLine(previewLine += " ", 223, 210, 0, 0, "Minion");
                     painter.writeSingleLine(previewLine, 1203, 210, 0, 0, "Minion");
