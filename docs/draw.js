@@ -42,9 +42,9 @@ class Painter {
      *
      * @param context {CanvasRenderingContext2D}
      * @param boldWordsExtra {String []}
-     * @param images {Image []}
+     * @param images {HTMLImageElement []}
      * @param numberFirstIcon {number}
-     * @param picture {{image: Image, x: number, y: number, zoom: number}}
+     * @param picture {{image: HTMLImageElement, x: number, y: number, zoom: number}}
      * @param fields {{creator: string, credit: string}}
      */
     constructor(

@@ -466,7 +466,7 @@ function initCardImageGenerator() {
             }
         }
 
-        context.save()
+        context.save();
         actuallyDraw();
         context.restore();
         //finish up
