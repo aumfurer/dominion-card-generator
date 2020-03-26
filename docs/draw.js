@@ -358,4 +358,16 @@ class Painter {
         }
     }
 
+    drawExpansionIcon(xCenter, yCenter, width, height) {
+        const expansion = this.images[17];
+        if (expansion.height) {
+            const scale = Math.min(height / expansion.height, width / expansion.width);
+            this.context.save();
+            this.context.translate(xCenter, yCenter);
+            this.context.scale(scale, scale);
+            this.context.drawImage(expansion, expansion.width / -2, expansion.height / -2);
+            this.context.restore();
+        }
+    }
+
 }

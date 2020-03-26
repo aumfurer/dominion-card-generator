@@ -178,17 +178,6 @@ function initCardImageGenerator() {
             document.getElementById('color2splitselector').setAttribute("style", "display:none");
         }
 
-        function drawExpansionIcon(xCenter, yCenter, width, height) {
-            if (expansion.height) {
-                const scale = Math.min(height / expansion.height, width / expansion.width);
-                context.save();
-                context.translate(xCenter, yCenter);
-                context.scale(scale, scale);
-                context.drawImage(expansion, expansion.width / -2, expansion.height / -2);
-                context.restore();
-            }
-        }
-
         function actuallyDraw() {
 
             const fields = {
@@ -212,8 +201,6 @@ function initCardImageGenerator() {
             );
 
             const descriptionStr = document.getElementById("description").value;
-
-            painter.context.save();
 
             if (templateSize === 0) { //card
                 painter.drawPicture(704, 706, 1150, 835);
@@ -280,7 +267,7 @@ function initCardImageGenerator() {
                 painter.writeIllustrationCredit(150, 2038, "white", "");
                 painter.writeCreatorCredit(1253, 2038, "white", "");
 
-                drawExpansionIcon(1230, 1920, 80, 80);
+                painter.drawExpansionIcon(1230, 1920, 80, 80);
 
             } else if (templateSize === 1) { //event/landscape
                 painter.drawPicture(1075, 584, 1887, 730);
@@ -320,7 +307,7 @@ function initCardImageGenerator() {
                 painter.writeIllustrationCredit(181, 1272, "black", "bold ");
                 painter.writeCreatorCredit(1969, 1272, "black", "bold ");
 
-                drawExpansionIcon(1930, 1190, 80, 80);
+                painter.drawExpansionIcon(1930, 1190, 80, 80);
 
             } else if (templateSize === 2) { //double card
                 painter.drawPicture(704, 1075, 1150, 564);
@@ -386,7 +373,7 @@ function initCardImageGenerator() {
                 painter.writeIllustrationCredit(150, 2038, "white", "");
                 painter.writeCreatorCredit(1253, 2038, "white", "");
 
-                drawExpansionIcon(1230, 1920, 80, 80);
+                painter.drawExpansionIcon(1230, 1920, 80, 80);
 
             } else if (templateSize === 3) { //base card
                 painter.drawPicture(704, 1075, 1150, 1898);
@@ -432,7 +419,7 @@ function initCardImageGenerator() {
                 painter.writeIllustrationCredit(165, 2045, "white", "");
                 painter.writeCreatorCredit(1225, 2045, "white", "");
 
-                drawExpansionIcon(1230, 1945, 80, 80);
+                painter.drawExpansionIcon(1230, 1945, 80, 80);
             } else if (templateSize === 4) { //pile marker
                 painter.drawPicture(1075, 702, 1250, 870);
                 painter.removeCorners(2151, 1403, 100);
@@ -475,11 +462,13 @@ function initCardImageGenerator() {
                 painter.writeIllustrationCredit(15, 660, "white", "", 16);
                 painter.writeCreatorCredit(913, 660, "white", "", 16);
 
-                drawExpansionIcon(888, 40, 40, 40);
+                painter.drawExpansionIcon(888, 40, 40, 40);
             }
-            painter.context.restore()
         }
+
+        context.save()
         actuallyDraw();
+        context.restore();
         //finish up
         //context.restore();
 
