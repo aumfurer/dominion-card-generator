@@ -1,4 +1,4 @@
-const version = "Hunter.3";
+const version = "Inkay";
 
 document.getElementsByClassName("heading-credits")[0].innerHTML = version;
 
@@ -45,14 +45,22 @@ class Painter {
      * @param images {Image []}
      * @param numberFirstIcon {number}
      * @param picture {{image: Image, x: number, y: number, zoom: number}}
+     * @param fields {{creator: string, credit: string}}
      */
-    constructor(context, boldWordsExtra, images, numberFirstIcon, picture) {
+    constructor(
+        context,
+        boldWordsExtra,
+        images,
+        numberFirstIcon,
+        picture,
+        fields
+    ) {
         this.context = context;
         this.boldLinePatternWords = this.buildBoldLinePatternWords(boldWordsExtra);
         this.images = images;
         this.numberFirstIcon = numberFirstIcon;
         this.picture = picture;
-
+        this.fields = fields;
         this.shadowDistance = 10
     }
 
@@ -332,4 +340,22 @@ class Painter {
         this.context.clearRect(0, height - radius, radius, radius);
         this.context.clearRect(width - radius, height - radius, radius, radius);
     }
+
+    writeIllustrationCredit(x, y, color, bold, size = 31) {
+        if (this.fields.credit) {
+            this.context.font = bold + size + "pt Times New Roman";
+            this.context.fillStyle = color;
+            this.context.fillText(this.fields.credit, x, y);
+        }
+    }
+
+    writeCreatorCredit(x, y, color, bold, size = 31) {
+        if (this.fields.creator) {
+            this.context.textAlign = "right";
+            this.context.font = bold + size + "pt Times New Roman";
+            this.context.fillStyle = color;
+            this.context.fillText(this.fields.creator, x, y);
+        }
+    }
+
 }
