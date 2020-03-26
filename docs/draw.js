@@ -1,4 +1,4 @@
-const version = "Feraligator.1";
+const version = "Feraligator.4";
 
 document.getElementsByClassName("heading-credits")[0].innerHTML = version;
 
@@ -201,5 +201,86 @@ class Painter {
         this.writeLineWithIconsReplacedWithSpaces(line, x, y, size / 90, family)
     }
 
+    writeDescription(description, xCenter, yCenter, maxWidth, maxHeight, boldSize) {
+        let words = description.split(" ");
+        let lines;
+        let widthsPerLine;
+        let heightsPerLine;
+        let overallHeight;
+        let size = 64 + 2;
+        do { //figure out the best font size, and also decide in advance how wide and tall each individual line is
+            widthsPerLine = [];
+            heightsPerLine = [];
+            overallHeight = 0;
+
+            size -= 2;
+            this.context.font = size + "pt Times New Roman";
+            let widthOfSpace = this.context.measureText(" ").width;
+            lines = [];
+            let line = "";
+            let progressiveWidth = 0;
+            for (let i = 0; i < words.length; ++i) {
+                let word = words[i];
+                let heightToAdd = 0;
+                if (word === "\n") {
+                    lines.push(line);
+                    if (line === "") //multiple newlines in a row
+                        heightToAdd = size * 0.5;
+                    else if (line === "-") //horizontal bar
+                        heightToAdd = size * 0.75;
+                    else if (line.match(this.boldLinePatternWords) && line.indexOf(" ") < 0) { //important line
+                        heightToAdd = boldSize * 1.433;
+                        let properFont = this.context.font;
+                        this.context.font = "bold " + boldSize + "pt Times New Roman"; //resizing up to 64
+                        progressiveWidth = this.context.measureText(line).width; //=, not +=
+                        this.context.font = properFont;
+                    } else if (line.match(iconWithNumbersPatternSingle) && !line.match(iconAddingNumber)) {
+                        heightToAdd = 275; //192 * 1.433
+                        let properFont = this.context.font;
+                        this.context.font = "bold 192pt Times New Roman";
+                        progressiveWidth = this.getWidthOfLineWithIconsReplacedWithSpaces(line); //=, not +=
+                        this.context.font = properFont;
+                    } else //regular word
+                        heightToAdd = size * 1.433;
+                    line = ""; //start next line empty
+                    widthsPerLine.push(progressiveWidth);
+                    progressiveWidth = 0;
+                } else if (progressiveWidth + this.getWidthOfLineWithIconsReplacedWithSpaces(" " + word) > maxWidth) {
+                    lines.push(line + " ");
+                    line = word;
+                    heightToAdd = size * 1.433;
+                    widthsPerLine.push(progressiveWidth);
+                    progressiveWidth = this.getWidthOfLineWithIconsReplacedWithSpaces(word);
+                } else {
+                    if (line.length) {
+                        line += " ";
+                        progressiveWidth += widthOfSpace;
+                    }
+                    line += word;
+                    let properFont = this.context.font;
+                    if (word.match(this.boldLinePatternWords)) //e.g. "+1 Action"
+                        this.context.font = "bold " + properFont;
+                    progressiveWidth += this.getWidthOfLineWithIconsReplacedWithSpaces(word);
+                    this.context.font = properFont;
+                    continue;
+                }
+                overallHeight += heightToAdd;
+                heightsPerLine.push(heightToAdd);
+            }
+            //overallHeight -= size*1.433;
+        } while (overallHeight > maxHeight && size > 16); //can only shrink so far before giving up
+        let y = yCenter - (overallHeight - size * 1.433) / 2;
+        //let barHeight = size / 80 * 10;
+        for (let i = 0; i < lines.length; ++i) {
+            let line = lines[i];
+            if (line === "-") //horizontal bar
+                this.context.fillRect(xCenter / 2, y - size * 0.375 - 5, xCenter, 10);
+            else if (line.length)
+                this.writeLineWithIconsReplacedWithSpaces(line, xCenter - widthsPerLine[i] / 2, y, size / 96, "Times New Roman", boldSize);
+            //else empty line with nothing to draw
+            y += heightsPerLine[i];
+        }
+        this.context.fillStyle = "black";
+    }
 
 }

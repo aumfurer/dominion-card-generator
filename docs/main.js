@@ -83,14 +83,13 @@ function initCardImageGenerator() {
     }
     //var templateSize = 0;
 
-    function rebuildBoldLinePatternWords() {
+    function buildBoldLinePatternWords() {
         let elemBoldkeys = document.getElementById("boldkeys");
         let customBoldableKeywords = elemBoldkeys !== null ? elemBoldkeys.value : "";
         let boldableKeywordsFull = customBoldableKeywords.length > 0 ? boldableKeywords.concat(customBoldableKeywords.split(";")) : boldableKeywords;
-        boldLinePatternWords = RegExp("([-+]\\d+)\\s+(" + boldableKeywordsFull.join("|") + "s?)", "ig");
+        return  RegExp("([-+]\\d+)\\s+(" + boldableKeywordsFull.join("|") + "s?)", "ig");
     }
-    var boldLinePatternWords;
-    rebuildBoldLinePatternWords();
+    var boldLinePatternWords = buildBoldLinePatternWords();
 
     var iconList = "[" + Object.keys(icons).join("") + "]";
     //var boldLinePatternIcons = RegExp("[-+]\\d+\\s" + iconList + "\\d+", "ig");
@@ -169,89 +168,12 @@ function initCardImageGenerator() {
 
         var shadowDistance = 10;
 
-        function writeDescription(elementID, xCenter, yCenter, maxWidth, maxHeight, boldSize) {
-            rebuildBoldLinePatternWords();
-            var description = document.getElementById(elementID).value.replace(/ *\n */g, " \n ").replace(boldLinePatternWords, "$1\xa0$2") + " \n"; //separate newlines into their own words for easier processing
-            var words = description.split(" ");
-            var lines;
-            var widthsPerLine;
-            var heightsPerLine;
-            var overallHeight;
-            var size = 64 + 2;
-            do { //figure out the best font size, and also decide in advance how wide and tall each individual line is
-                widthsPerLine = [];
-                heightsPerLine = [];
-                overallHeight = 0;
-
-                size -= 2;
-                context.font = size + "pt Times New Roman";
-                var widthOfSpace = context.measureText(" ").width;
-                lines = [];
-                var line = "";
-                var progressiveWidth = 0;
-                for (var i = 0; i < words.length; ++i) {
-                    var word = words[i];
-                    var heightToAdd = 0;
-                    if (word === "\n") {
-                        lines.push(line);
-                        if (line === "") //multiple newlines in a row
-                            heightToAdd = size * 0.5;
-                        else if (line === "-") //horizontal bar
-                            heightToAdd = size * 0.75;
-                        else if (line.match(boldLinePatternWords) && line.indexOf(" ") < 0) { //important line
-                            heightToAdd = boldSize * 1.433;
-                            var properFont = context.font;
-                            context.font = "bold " + boldSize + "pt Times New Roman"; //resizing up to 64
-                            progressiveWidth = context.measureText(line).width; //=, not +=
-                            context.font = properFont;
-                        } else if (line.match(iconWithNumbersPatternSingle) && !line.match(iconAddingNumber)) {
-                            heightToAdd = 275; //192 * 1.433
-                            var properFont = context.font;
-                            context.font = "bold 192pt Times New Roman";
-                            progressiveWidth = getWidthOfLineWithIconsReplacedWithSpaces(line); //=, not +=
-                            context.font = properFont;
-                        } else //regular word
-                            heightToAdd = size * 1.433;
-                        line = ""; //start next line empty
-                        widthsPerLine.push(progressiveWidth);
-                        progressiveWidth = 0;
-                    } else if (progressiveWidth + getWidthOfLineWithIconsReplacedWithSpaces(" " + word) > maxWidth) {
-                        lines.push(line + " ");
-                        line = word;
-                        heightToAdd = size * 1.433;
-                        widthsPerLine.push(progressiveWidth);
-                        progressiveWidth = getWidthOfLineWithIconsReplacedWithSpaces(word);
-                    } else {
-                        if (line.length) {
-                            line += " ";
-                            progressiveWidth += widthOfSpace;
-                        }
-                        line += word;
-                        var properFont = context.font;
-                        if (word.match(boldLinePatternWords)) //e.g. "+1 Action"
-                            context.font = "bold " + properFont;
-                        progressiveWidth += getWidthOfLineWithIconsReplacedWithSpaces(word);
-                        context.font = properFont;
-                        continue;
-                    }
-                    overallHeight += heightToAdd;
-                    heightsPerLine.push(heightToAdd);
-                }
-                //overallHeight -= size*1.433;
-            } while (overallHeight > maxHeight && size > 16); //can only shrink so far before giving up
-            var y = yCenter - (overallHeight - size * 1.433) / 2;
-            //var barHeight = size / 80 * 10;
-            for (var i = 0; i < lines.length; ++i) {
-                var line = lines[i];
-                if (line === "-") //horizontal bar
-                    context.fillRect(xCenter / 2, y - size * 0.375 - 5, xCenter, 10);
-                else if (line.length)
-                    new Painter(context, boldLinePatternWords, images, numberFirstIcon, shadowDistance)
-                        .writeLineWithIconsReplacedWithSpaces(line, xCenter - widthsPerLine[i] / 2, y, size / 96, "Times New Roman", boldSize)
-                //else empty line with nothing to draw
-                y += heightsPerLine[i];
-            }
-            context.fillStyle = "black";
+        function getDesc(elementID) {
+            return document
+                .getElementById(elementID)
+                .value
+                .replace(/ *\n */g, " \n ")
+                .replace(boldLinePatternWords, "$1\xa0$2") + " \n";
         }
 
         function writeIllustrationCredit(x, y, color, bold, size = 31) {
@@ -379,8 +301,93 @@ function initCardImageGenerator() {
             }
         }
 
+        // function writeDescription(description, xCenter, yCenter, maxWidth, maxHeight, boldSize) {
+        //     var words = description.split(" ");
+        //     var lines;
+        //     var widthsPerLine;
+        //     var heightsPerLine;
+        //     var overallHeight;
+        //     var size = 64 + 2;
+        //     do { //figure out the best font size, and also decide in advance how wide and tall each individual line is
+        //         widthsPerLine = [];
+        //         heightsPerLine = [];
+        //         overallHeight = 0;
+        //
+        //         size -= 2;
+        //         context.font = size + "pt Times New Roman";
+        //         var widthOfSpace = context.measureText(" ").width;
+        //         lines = [];
+        //         var line = "";
+        //         var progressiveWidth = 0;
+        //         for (var i = 0; i < words.length; ++i) {
+        //             var word = words[i];
+        //             var heightToAdd = 0;
+        //             if (word === "\n") {
+        //                 lines.push(line);
+        //                 if (line === "") //multiple newlines in a row
+        //                     heightToAdd = size * 0.5;
+        //                 else if (line === "-") //horizontal bar
+        //                     heightToAdd = size * 0.75;
+        //                 else if (line.match(boldLinePatternWords) && line.indexOf(" ") < 0) { //important line
+        //                     heightToAdd = boldSize * 1.433;
+        //                     var properFont = context.font;
+        //                     context.font = "bold " + boldSize + "pt Times New Roman"; //resizing up to 64
+        //                     progressiveWidth = context.measureText(line).width; //=, not +=
+        //                     context.font = properFont;
+        //                 } else if (line.match(iconWithNumbersPatternSingle) && !line.match(iconAddingNumber)) {
+        //                     heightToAdd = 275; //192 * 1.433
+        //                     var properFont = context.font;
+        //                     context.font = "bold 192pt Times New Roman";
+        //                     progressiveWidth = getWidthOfLineWithIconsReplacedWithSpaces(line); //=, not +=
+        //                     context.font = properFont;
+        //                 } else //regular word
+        //                     heightToAdd = size * 1.433;
+        //                 line = ""; //start next line empty
+        //                 widthsPerLine.push(progressiveWidth);
+        //                 progressiveWidth = 0;
+        //             } else if (progressiveWidth + getWidthOfLineWithIconsReplacedWithSpaces(" " + word) > maxWidth) {
+        //                 lines.push(line + " ");
+        //                 line = word;
+        //                 heightToAdd = size * 1.433;
+        //                 widthsPerLine.push(progressiveWidth);
+        //                 progressiveWidth = getWidthOfLineWithIconsReplacedWithSpaces(word);
+        //             } else {
+        //                 if (line.length) {
+        //                     line += " ";
+        //                     progressiveWidth += widthOfSpace;
+        //                 }
+        //                 line += word;
+        //                 var properFont = context.font;
+        //                 if (word.match(boldLinePatternWords)) //e.g. "+1 Action"
+        //                     context.font = "bold " + properFont;
+        //                 progressiveWidth += getWidthOfLineWithIconsReplacedWithSpaces(word);
+        //                 context.font = properFont;
+        //                 continue;
+        //             }
+        //             overallHeight += heightToAdd;
+        //             heightsPerLine.push(heightToAdd);
+        //         }
+        //         //overallHeight -= size*1.433;
+        //     } while (overallHeight > maxHeight && size > 16); //can only shrink so far before giving up
+        //     var y = yCenter - (overallHeight - size * 1.433) / 2;
+        //     //var barHeight = size / 80 * 10;
+        //     for (var i = 0; i < lines.length; ++i) {
+        //         var line = lines[i];
+        //         if (line === "-") //horizontal bar
+        //             context.fillRect(xCenter / 2, y - size * 0.375 - 5, xCenter, 10);
+        //         else if (line.length)
+        //             new Painter(context, boldLinePatternWords, images, numberFirstIcon, shadowDistance)
+        //                 .writeLineWithIconsReplacedWithSpaces(line, xCenter - widthsPerLine[i] / 2, y, size / 96, "Times New Roman", boldSize)
+        //         //else empty line with nothing to draw
+        //         y += heightsPerLine[i];
+        //     }
+        //     context.fillStyle = "black";
+        // }
+
         function actuallyDraw() {
 
+            boldLinePatternWords = buildBoldLinePatternWords();
+            const descriptionStr = getDesc("description");
             const painter = new Painter(context, boldLinePatternWords, images, numberFirstIcon, shadowDistance);
 
             if (templateSize == 0) { //card
@@ -442,9 +449,9 @@ function initCardImageGenerator() {
                 }
                 context.fillStyle = (isEachColorDark[0]) ? "white" : "black";
                 if (!heirloomLine)
-                    writeDescription("description", 701, 1500, 960, 660, 64);
+                    painter.writeDescription(descriptionStr, 701, 1500, 960, 660, 64);
                 else
-                    writeDescription("description", 701, 1450, 960, 560, 64);
+                    painter.writeDescription(descriptionStr, 701, 1450, 960, 560, 64);
                 writeIllustrationCredit(150, 2038, "white", "");
                 writeCreatorCredit(1253, 2038, "white", "");
 
@@ -484,7 +491,7 @@ function initCardImageGenerator() {
 
                 if (priceLine)
                     painter.writeLineWithIconsReplacedWithSpaces(priceLine + " ", 130, 205, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
-                writeDescription("description", 1075, 1107, 1600, 283, 70);
+                painter.writeDescription(descriptionStr, 1075, 1107, 1600, 283, 70);
                 writeIllustrationCredit(181, 1272, "black", "bold ");
                 writeCreatorCredit(1969, 1272, "black", "bold ");
 
@@ -538,17 +545,17 @@ function initCardImageGenerator() {
                     painter.writeSingleLine(t, p ? 750 : 701, 1922, p ? 890 : 1190, 64);
                     if (p)
                         painter.writeLineWithIconsReplacedWithSpaces(p + " ", 153, 1940, 85 / 90, "Minion", undefined)
-                    writeDescription(d, 701, 1600, 960, 460, 64);
+                    painter.writeDescription(d, 701, 1600, 960, 460, 64);
                     context.restore();
                 }
 
                 context.save();
-                drawHalfCard(typeLine, "title", priceLine, "description", 0);
+                drawHalfCard(typeLine, "title", priceLine, descriptionStr, 0);
                 context.save();
                 context.translate(1403, 2151); //bottom right corner
                 context.rotate(Math.PI);
                 shadowDistance = -shadowDistance;
-                drawHalfCard(heirloomLine, "title2", previewLine, "description2", (normalColorCurrentIndices[1] > 0) ? 1 : 0);
+                drawHalfCard(heirloomLine, "title2", previewLine, getDesc("description2"), (normalColorCurrentIndices[1] > 0) ? 1 : 0);
                 shadowDistance = -shadowDistance;
                 writeIllustrationCredit(150, 2038, "white", "");
                 writeCreatorCredit(1253, 2038, "white", "");
@@ -593,9 +600,9 @@ function initCardImageGenerator() {
                 }
                 context.fillStyle = (isEachColorDark[0]) ? "white" : "black";
                 if (!heirloomLine)
-                    writeDescription("description", 701, 1060, 960, 1500, 64);
+                    painter.writeDescription(descriptionStr, 701, 1060, 960, 1500, 64);
                 else
-                    writeDescription("description", 701, 1000, 960, 1400, 64);
+                    painter.writeDescription(descriptionStr, 701, 1000, 960, 1400, 64);
                 writeIllustrationCredit(165, 2045, "white", "");
                 writeCreatorCredit(1225, 2045, "white", "");
 
@@ -637,7 +644,8 @@ function initCardImageGenerator() {
                     context.fillStyle = "white";
                 painter.writeSingleLine(document.getElementById("title").value, 464, 96, 490, 55);
 
-                writeDescription("description", 464, 572, 740, 80, 44);
+                painter.writeDescription(descriptionStr, 464, 572, 740, 80, 44);
+                painter.writeDescription(descriptionStr, 464, 572, 740, 80, 44);
 
                 writeIllustrationCredit(15, 660, "white", "", 16);
                 writeCreatorCredit(913, 660, "white", "", 16);
