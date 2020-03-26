@@ -16,16 +16,7 @@ Array.prototype.remove = function () {
 // Initialization of complete logic on load of page
 function initCardImageGenerator() {
 
-    //these three can all be expanded as you see fit
-    var icons = { //the names should match the image filenames (plus a .png extension).
-        "@": ["Debt", "white", "Treasure"],
-        "\\^": ["Potion", "white", "Treasure"],
-        "%": ["VP", "white", "Victory"],
-        "#": ["VP-Token", "white", "Victory"], //German VP Token (not a nice decision of ASS Altenburger, but maybe nice to have to keep the cards consistent)
-        "\\$": ["Coin", "black", "Treasure"],
-        "§": ["Custom Icon", "white", "Treasure"]
-    };
-    var normalColorFactorLists = [
+    const normalColorFactorLists = [
 		["Action/Event", [1, 1, 1]],
 		["Treasure", [1.1, 0.95, 0.55]],
 		["Victory", [0.75, 0.9, 0.65]],
@@ -44,31 +35,15 @@ function initCardImageGenerator() {
 		["Project", [1.15, 0.95, 0.9, 0.4, 0.2, 0.15]],
 		["Way", [1, 1.15, 1.25, 0.25, 0.3, 0.35, 1.6, 1.6, 1.6, 1.3, 1.3, 1.3]]
 	];
-    var boldableKeywords = [ //case-insensitive
-		"card",
-		"buy",
-		"action",
-		"coffer",
-		"villager",
 
-		"aktion",
-        "aktionen",
-        "karte",
-        "karten",
-        "kauf",
-        "käufe",
-        "dorfbewohner",
-        "münze",
-        "münzen"
-	];
-    var travellerTypesPattern = new RegExp(["Traveller", "Traveler", "Reisender", "Reisende"].join("|"));
+    const travellerTypesPattern = new RegExp(["Traveller", "Traveler", "Reisender", "Reisende"].join("|"));
 
+    const normalColorCustomIndices = [0, 0];
+    const normalColorDropdowns = document.getElementsByName("normalcolor");
 
-    var normalColorCustomIndices = [0, 0];
-    var normalColorDropdowns = document.getElementsByName("normalcolor");
-    for (var j = 0; j < normalColorDropdowns.length; ++j) {
-        for (var i = 0; i < normalColorFactorLists.length; ++i) { //"- j" because only the first dropdown should have Night
-            var option = document.createElement("option");
+    for (let j = 0; j < normalColorDropdowns.length; ++j) {
+        for (let i = 0; i < normalColorFactorLists.length; ++i) { //"- j" because only the first dropdown should have Night
+            const option = document.createElement("option");
             option.textContent = normalColorFactorLists[i][0];
             normalColorDropdowns[j].appendChild(option);
         }
@@ -81,34 +56,23 @@ function initCardImageGenerator() {
         normalColorDropdowns[j].appendChild(customOption);
         normalColorDropdowns[j].selectedIndex = 0;
     }
-    //var templateSize = 0;
 
-    function buildBoldLinePatternWords() {
+    function getExtraBoldWords() {
         let elemBoldkeys = document.getElementById("boldkeys");
-        let customBoldableKeywords = elemBoldkeys !== null ? elemBoldkeys.value : "";
-        let boldableKeywordsFull = customBoldableKeywords.length > 0 ? boldableKeywords.concat(customBoldableKeywords.split(";")) : boldableKeywords;
-        return  RegExp("([-+]\\d+)\\s+(" + boldableKeywordsFull.join("|") + "s?)", "ig");
+        let boldExtraKeys = elemBoldkeys !== null ? elemBoldkeys.value : "";
+        return boldExtraKeys.split(";").filter(x => x !== "")
     }
-    var boldLinePatternWords = buildBoldLinePatternWords();
 
-    var iconList = "[" + Object.keys(icons).join("") + "]";
-    //var boldLinePatternIcons = RegExp("[-+]\\d+\\s" + iconList + "\\d+", "ig");
-    var iconWithNumbersPattern = "[-+]?(" + iconList + ")([\\d\\?]*[-+\\*]?)";
-    var iconWithNumbersPatternSingle = RegExp("^([-+]?\\d+)?" + iconWithNumbersPattern + "(\\S*)$");
-    iconWithNumbersPattern = RegExp(iconWithNumbersPattern, "g");
-    var iconAddingNumber = RegExp("\\+(" + iconList + ")\\d+");
-
-    var canvases = document.getElementsByClassName("myCanvas");
-
-    var images = [];
-    var imagesLoaded = false;
-    var recolorFactorList = [
+    const canvases = document.getElementsByClassName("myCanvas");
+    let images = [];
+    let imagesLoaded = false;
+    let recolorFactorList = [
 		[0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6],
 		[0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6]
 	];
 
-    var normalColorCurrentIndices = [0, 0];
-    var recoloredImages = [];
+    const normalColorCurrentIndices = [0, 0];
+    let recoloredImages = [];
 
     function draw() {
 
@@ -138,19 +102,19 @@ function initCardImageGenerator() {
                 while (recolorFactors.length < 6)
                     recolorFactors.push(0);
 
-                if (offset == 0) {
-                    for (var ch = 0; ch < 3; ++ch)
+                if (offset === 0) {
+                    for (let ch = 0; ch < 3; ++ch)
                         recolorFactors[ch] -= recolorFactors[ch + 3];
-                    for (var px = 0, ct = w * h * 4; px < ct; px += 4)
+                    for (let px = 0, ct = w * h * 4; px < ct; px += 4)
                         if (rgba[px + 3]) //no need to recolor pixels that are fully transparent
-                            for (var ch = 0; ch < 3; ++ch)
+                            for (let ch = 0; ch < 3; ++ch)
                                 rgba[px + ch] = Math.max(0, Math.min(255, Math.round(recolorFactors[ch + 3] * 255 + rgba[px + ch] * recolorFactors[ch])));
                 } else {
                     while (recolorFactors.length < 12)
                         recolorFactors.push(genericCustomAccentColors[templateSize & 1][recolorFactors.length]);
-                    for (var px = 0, ct = w * h * 4; px < ct; px += 4)
+                    for (let px = 0, ct = w * h * 4; px < ct; px += 4)
                         if (rgba[px + 3])
-                            for (var ch = 0; ch < 3; ++ch)
+                            for (let ch = 0; ch < 3; ++ch)
                                 rgba[px + ch] = Math.max(0, Math.min(255, rgba[px + ch] * recolorFactors[ch + offset]));
                 }
 
@@ -158,22 +122,6 @@ function initCardImageGenerator() {
                 recoloredImages[imageID] = cnvs;
             }
             return recoloredImages[imageID];
-        }
-
-        var iconReplacedWithSpaces = "     ";
-
-        function getWidthOfLineWithIconsReplacedWithSpaces(line) {
-            return context.measureText(line.replace(iconWithNumbersPattern, iconReplacedWithSpaces)).width;
-        }
-
-        var shadowDistance = 10;
-
-        function getDesc(elementID) {
-            return document
-                .getElementById(elementID)
-                .value
-                .replace(/ *\n */g, " \n ")
-                .replace(boldLinePatternWords, "$1\xa0$2") + " \n";
         }
 
         function writeIllustrationCredit(x, y, color, bold, size = 31) {
@@ -198,13 +146,7 @@ function initCardImageGenerator() {
         }
 
         if (!imagesLoaded) {
-            imagesLoaded = (function () {
-                for (var i = 0; i < images.length; ++i)
-                    if (!images[i].complete) {
-                        return false;
-                    }
-                return true;
-            })();
+            imagesLoaded = images.every(img => img.complete);
             if (!imagesLoaded) {
                 queueDraw();
                 return;
@@ -214,8 +156,9 @@ function initCardImageGenerator() {
         canvases[0].parentNode.setAttribute("data-status", "Redrawing...");
 
         // clear
-        for (var i = 0; i < canvases.length; ++i)
-            canvases[i].getContext("2d").clearRect(0, 0, canvases[i].width, canvases[i].height);
+        for (let c of canvases)
+            c.getContext("2d").clearRect(0, 0, c.width, c.height);
+
 
         var context;
         if (templateSize === 0 || templateSize === 2 || templateSize === 3) {
@@ -230,25 +173,25 @@ function initCardImageGenerator() {
 
         // draw
 
-        var picture = images[5];
-        var pictureX = document.getElementById("picture-x").value;
-        var pictureY = document.getElementById("picture-y").value;
-        var pictureZoom = document.getElementById("picture-zoom").value;
-        var expansion = images[17];
-        var typeLine = document.getElementById("type").value;
-        var heirloomLine = document.getElementById("type2").value;
-        var previewLine = document.getElementById("preview").value;
-        var priceLine = document.getElementById("price").value;
-        var numberPriceIcons = (priceLine.match(new RegExp("[" + Object.keys(icons).join("") + "]", "g")) || []).length
+        const picture = images[5];
+        const pictureX = document.getElementById("picture-x").value;
+        const pictureY = document.getElementById("picture-y").value;
+        const pictureZoom = document.getElementById("picture-zoom").value;
+        const expansion = images[17];
+        const typeLine = document.getElementById("type").value;
+        const heirloomLine = document.getElementById("type2").value;
+        const priceLine = document.getElementById("price").value;
+        const numberPriceIcons = (priceLine.match(new RegExp("[" + Object.keys(icons).join("") + "]", "g")) || []).length;
+        const previewLine = document.getElementById("preview").value;
 
-        var isEachColorDark = [false, false];
-        for (var i = 0; i < 2; ++i)
-            isEachColorDark[i] = (i == 1 && normalColorCurrentIndices[1] == 0) ? isEachColorDark[0] : (((normalColorCurrentIndices[i] >= normalColorCustomIndices[i]) ? recolorFactorList[i] : normalColorFactorLists[normalColorCurrentIndices[i] - i][1]).slice(0, 3).reduce(function getSum(total, num) {
+        let isEachColorDark = [false, false];
+        for (let i = 0; i < 2; ++i)
+            isEachColorDark[i] = (i === 1 && normalColorCurrentIndices[1] == 0) ? isEachColorDark[0] : (((normalColorCurrentIndices[i] >= normalColorCustomIndices[i]) ? recolorFactorList[i] : normalColorFactorLists[normalColorCurrentIndices[i] - i][1]).slice(0, 3).reduce(function getSum(total, num) {
                 return total + parseFloat(num);
             }) <= 1.5);
-        var differentIntensities = isEachColorDark[0] != isEachColorDark[1];
+        const differentIntensities = isEachColorDark[0] !== isEachColorDark[1];
 
-        if (!(differentIntensities || parseInt(normalColorCurrentIndices[1]) == 0 || parseInt(normalColorCurrentIndices[0]) + 1 == parseInt(normalColorCurrentIndices[1]))) {
+        if (!(differentIntensities || parseInt(normalColorCurrentIndices[1]) === 0 || parseInt(normalColorCurrentIndices[0]) + 1 === parseInt(normalColorCurrentIndices[1]))) {
             document.getElementById('color2splitselector').removeAttribute("style");
         } else {
             document.getElementById('color2splitselector').setAttribute("style", "display:none");
@@ -301,96 +244,13 @@ function initCardImageGenerator() {
             }
         }
 
-        // function writeDescription(description, xCenter, yCenter, maxWidth, maxHeight, boldSize) {
-        //     var words = description.split(" ");
-        //     var lines;
-        //     var widthsPerLine;
-        //     var heightsPerLine;
-        //     var overallHeight;
-        //     var size = 64 + 2;
-        //     do { //figure out the best font size, and also decide in advance how wide and tall each individual line is
-        //         widthsPerLine = [];
-        //         heightsPerLine = [];
-        //         overallHeight = 0;
-        //
-        //         size -= 2;
-        //         context.font = size + "pt Times New Roman";
-        //         var widthOfSpace = context.measureText(" ").width;
-        //         lines = [];
-        //         var line = "";
-        //         var progressiveWidth = 0;
-        //         for (var i = 0; i < words.length; ++i) {
-        //             var word = words[i];
-        //             var heightToAdd = 0;
-        //             if (word === "\n") {
-        //                 lines.push(line);
-        //                 if (line === "") //multiple newlines in a row
-        //                     heightToAdd = size * 0.5;
-        //                 else if (line === "-") //horizontal bar
-        //                     heightToAdd = size * 0.75;
-        //                 else if (line.match(boldLinePatternWords) && line.indexOf(" ") < 0) { //important line
-        //                     heightToAdd = boldSize * 1.433;
-        //                     var properFont = context.font;
-        //                     context.font = "bold " + boldSize + "pt Times New Roman"; //resizing up to 64
-        //                     progressiveWidth = context.measureText(line).width; //=, not +=
-        //                     context.font = properFont;
-        //                 } else if (line.match(iconWithNumbersPatternSingle) && !line.match(iconAddingNumber)) {
-        //                     heightToAdd = 275; //192 * 1.433
-        //                     var properFont = context.font;
-        //                     context.font = "bold 192pt Times New Roman";
-        //                     progressiveWidth = getWidthOfLineWithIconsReplacedWithSpaces(line); //=, not +=
-        //                     context.font = properFont;
-        //                 } else //regular word
-        //                     heightToAdd = size * 1.433;
-        //                 line = ""; //start next line empty
-        //                 widthsPerLine.push(progressiveWidth);
-        //                 progressiveWidth = 0;
-        //             } else if (progressiveWidth + getWidthOfLineWithIconsReplacedWithSpaces(" " + word) > maxWidth) {
-        //                 lines.push(line + " ");
-        //                 line = word;
-        //                 heightToAdd = size * 1.433;
-        //                 widthsPerLine.push(progressiveWidth);
-        //                 progressiveWidth = getWidthOfLineWithIconsReplacedWithSpaces(word);
-        //             } else {
-        //                 if (line.length) {
-        //                     line += " ";
-        //                     progressiveWidth += widthOfSpace;
-        //                 }
-        //                 line += word;
-        //                 var properFont = context.font;
-        //                 if (word.match(boldLinePatternWords)) //e.g. "+1 Action"
-        //                     context.font = "bold " + properFont;
-        //                 progressiveWidth += getWidthOfLineWithIconsReplacedWithSpaces(word);
-        //                 context.font = properFont;
-        //                 continue;
-        //             }
-        //             overallHeight += heightToAdd;
-        //             heightsPerLine.push(heightToAdd);
-        //         }
-        //         //overallHeight -= size*1.433;
-        //     } while (overallHeight > maxHeight && size > 16); //can only shrink so far before giving up
-        //     var y = yCenter - (overallHeight - size * 1.433) / 2;
-        //     //var barHeight = size / 80 * 10;
-        //     for (var i = 0; i < lines.length; ++i) {
-        //         var line = lines[i];
-        //         if (line === "-") //horizontal bar
-        //             context.fillRect(xCenter / 2, y - size * 0.375 - 5, xCenter, 10);
-        //         else if (line.length)
-        //             new Painter(context, boldLinePatternWords, images, numberFirstIcon, shadowDistance)
-        //                 .writeLineWithIconsReplacedWithSpaces(line, xCenter - widthsPerLine[i] / 2, y, size / 96, "Times New Roman", boldSize)
-        //         //else empty line with nothing to draw
-        //         y += heightsPerLine[i];
-        //     }
-        //     context.fillStyle = "black";
-        // }
-
         function actuallyDraw() {
 
-            boldLinePatternWords = buildBoldLinePatternWords();
-            const descriptionStr = getDesc("description");
-            const painter = new Painter(context, boldLinePatternWords, images, numberFirstIcon, shadowDistance);
+            const painter = new Painter(context, getExtraBoldWords(), images, numberFirstIcon);
 
-            if (templateSize == 0) { //card
+            const descriptionStr = document.getElementById("description").value;
+
+            if (templateSize === 0) { //card
                 drawPicture(704, 706, 1150, 835);
                 removeCorners(1403, 2151, 100);
 
@@ -401,7 +261,7 @@ function initCardImageGenerator() {
                 }
                 context.drawImage(getRecoloredImage(2, 0, 6), 0, 0); //CardGray
                 context.drawImage(getRecoloredImage(16, 0, 9), 0, 0); //CardBrown
-                if (normalColorCurrentIndices[0] > 0 && !isEachColorDark[0] && normalColorCurrentIndices[1] == 0) //single (non-Action, non-Night) color
+                if (normalColorCurrentIndices[0] > 0 && !isEachColorDark[0] && normalColorCurrentIndices[1] === 0) //single (non-Action, non-Night) color
                     context.drawImage(images[3], 44, 1094); //DescriptionFocus
 
                 if (travellerTypesPattern.test(typeLine)) {
@@ -444,8 +304,8 @@ function initCardImageGenerator() {
                 if (priceLine)
                     painter.writeLineWithIcons(priceLine + " ", 153, 1940, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
                 if (previewLine) {
-                    painter.writeSingleLine(previewLine += " ", 223, 210, 0, 0, "Minion");
-                    painter.writeSingleLine(previewLine, 1203, 210, 0, 0, "Minion");
+                    painter.writeSingleLine(previewLine + " ", 223, 210, 0, 0, "Minion");
+                    painter.writeSingleLine(previewLine + " ", 1203, 210, 0, 0, "Minion");
                 }
                 context.fillStyle = (isEachColorDark[0]) ? "white" : "black";
                 if (!heirloomLine)
@@ -457,7 +317,7 @@ function initCardImageGenerator() {
 
                 drawExpansionIcon(1230, 1920, 80, 80);
 
-            } else if (templateSize == 1) { //event/landscape
+            } else if (templateSize === 1) { //event/landscape
                 drawPicture(1075, 584, 1887, 730);
                 removeCorners(2151, 1403, 100);
 
@@ -497,7 +357,7 @@ function initCardImageGenerator() {
 
                 drawExpansionIcon(1930, 1190, 80, 80);
 
-            } else if (templateSize == 2) { //double card
+            } else if (templateSize === 2) { //double card
                 drawPicture(704, 1075, 1150, 564);
                 removeCorners(1403, 2151, 100);
 
@@ -554,15 +414,16 @@ function initCardImageGenerator() {
                 context.save();
                 context.translate(1403, 2151); //bottom right corner
                 context.rotate(Math.PI);
-                shadowDistance = -shadowDistance;
-                drawHalfCard(heirloomLine, "title2", previewLine, getDesc("description2"), (normalColorCurrentIndices[1] > 0) ? 1 : 0);
-                shadowDistance = -shadowDistance;
+                painter.shadowDistance = -painter.shadowDistance;
+                const description2 = document.getElementById("description2").value;
+                drawHalfCard(heirloomLine, "title2", previewLine, description2, (normalColorCurrentIndices[1] > 0) ? 1 : 0);
+                painter.shadowDistance = -painter.shadowDistance;
                 writeIllustrationCredit(150, 2038, "white", "");
                 writeCreatorCredit(1253, 2038, "white", "");
 
                 drawExpansionIcon(1230, 1920, 80, 80);
 
-            } else if (templateSize == 3) { //base card
+            } else if (templateSize === 3) { //base card
                 drawPicture(704, 1075, 1150, 1898);
                 removeCorners(1403, 2151, 100);
 
@@ -593,10 +454,10 @@ function initCardImageGenerator() {
                     }
                 }
                 if (priceLine)
-                    painter.writeLineWithIcons(priceLine + " ", 153, 1947, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+                    painter.writeLineWithIcons(priceLine + " ", 153, 1947, 85 / 90, "Minion"); //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
                 if (previewLine) {
-                    painter.writeSingleLine(previewLine += " ", 223, 210, 0, 0, "Minion");
-                    painter.writeSingleLine(previewLine, 1203, 210, 0, 0, "Minion");
+                    painter.writeSingleLine(previewLine + " ", 223, 210, 0, 0, "Minion");
+                    painter.writeSingleLine(previewLine + " ", 1203, 210, 0, 0, "Minion");
                 }
                 context.fillStyle = (isEachColorDark[0]) ? "white" : "black";
                 if (!heirloomLine)
@@ -607,7 +468,7 @@ function initCardImageGenerator() {
                 writeCreatorCredit(1225, 2045, "white", "");
 
                 drawExpansionIcon(1230, 1945, 80, 80);
-            } else if (templateSize == 4) { //pile marker
+            } else if (templateSize === 4) { //pile marker
                 drawPicture(1075, 702, 1250, 870);
                 removeCorners(2151, 1403, 100);
 
@@ -629,7 +490,7 @@ function initCardImageGenerator() {
                 context.rotate(Math.PI * 3 / 2);
                 painter.writeSingleLine(document.getElementById("title").value, -700, 230, 500, 75);
                 context.restore();
-            } else if (templateSize == 5) { //player mat
+            } else if (templateSize === 5) { //player mat
                 drawPicture(464, 342, 928, 684);
 
 
@@ -663,12 +524,12 @@ function initCardImageGenerator() {
         document.getElementById("load-indicator").setAttribute("style", "display:none;");
         canvases[0].parentNode.removeAttribute("data-status");
     }
-    var nextDrawInstruction = 0;
 
-    function queueDraw(time) {
+    let nextDrawInstruction = 0;
+    function queueDraw(time=1500) {
         if (nextDrawInstruction)
             window.clearTimeout(nextDrawInstruction);
-        nextDrawInstruction = window.setTimeout(draw, time || 1500);
+        nextDrawInstruction = window.setTimeout(draw, time);
     }
 
     function updateURL() {
@@ -681,15 +542,15 @@ function initCardImageGenerator() {
         arguments += "picture=" + encodeURIComponent(document.getElementById("picture").value) + "&";
         arguments += "expansion=" + encodeURIComponent(document.getElementById("expansion").value) + "&";
         arguments += "custom-icon=" + encodeURIComponent(document.getElementById("custom-icon").value);
-        for (var i = 0; i < normalColorDropdowns.length; ++i) {
+        for (let i = 0; i < normalColorDropdowns.length; ++i) {
             switch (normalColorCustomIndices[i] - normalColorDropdowns[i].selectedIndex) {
                 case 0: //custom
-                    for (var ch = 0; ch < 3; ++ch)
+                    for (let ch = 0; ch < 3; ++ch)
                         arguments += "&c" + i + "." + ch + "=" + recolorInputs[i * 12 + ch].value;
                     break;
                 case -1: //extra custom
-                    for (var ch = 0; ch < 12; ++ch) {
-                        var recolorInputsIndex = i * 12 + ch;
+                    for (let ch = 0; ch < 12; ++ch) {
+                        let recolorInputsIndex = i * 12 + ch;
                         if (recolorInputs.length <= recolorInputsIndex)
                             break;
                         arguments += "&c" + i + "." + ((ch / 3) | 0) + "." + (ch % 3) + "=" + recolorInputs[i * 12 + ch].value;
@@ -710,7 +571,7 @@ function initCardImageGenerator() {
         let canvas = document.createElement('CANVAS');
         let img = document.createElement('img');
         img.setAttribute('crossorigin', 'anonymous');
-        if (url.substr(0, 11) != 'data:image/' && url.substr(0, 8) != 'file:///') {
+        if (!url.startsWith('data:image/') && !url.startsWith('file:///')) {
             img.src = 'https://cors-anywhere.herokuapp.com/' + url;
         } else {
             img.src = url;
@@ -730,8 +591,8 @@ function initCardImageGenerator() {
             callback(dataURL);
         };
     }
-    var useCORS = true; // flag to activate loading of external images via CORS helper function -> otherwise canvas is tainted and download button not working
 
+    const useCORS = true; // flag to activate loading of external images via CORS helper function -> otherwise canvas is tainted and download button not working
 
     // initialize stage
     var sources = [
@@ -764,40 +625,50 @@ function initCardImageGenerator() {
         "MatBannerBottom.png"
 		//icons come afterwards
 	];
-    for (var i = 0; i < sources.length; i++)
+    for (let source of sources)
         recoloredImages.push(false);
-    var legend = document.getElementById("legend");
-    var numberFirstIcon = sources.length;
-    for (key in icons) {
-        var li = document.createElement("li");
+
+    const legend = document.getElementById("legend");
+    const numberFirstIcon = sources.length;
+
+    for (let key in icons) {
+        const li = document.createElement("li");
         li.textContent = ": " + icons[key][0];
-        var span = document.createElement("span");
+        const span = document.createElement("span");
         span.classList.add("def");
         span.textContent = key.replace("\\", "");
         li.insertBefore(span, li.firstChild);
         legend.insertBefore(li, legend.firstChild);
         sources.push(icons[key][0] + ".png");
     }
-    for (var i = 0; i < sources.length; i++) {
+
+    for (let i = 0; i < sources.length; i++) {
         images.push(new Image());
         images[i].src = "card-resources/" + sources[i];
     }
 
-    var simpleOnChangeInputFieldIDs = ["title", "description", "type", "credit", "creator", "price", "preview", "type2", "color2split", "boldkeys", "picture-x", "picture-y", "picture-zoom"];
-    var simpleOnChangeButOnlyForSize2InputFieldIDs = ["title2", "description2"];
-    for (var i = 0; i < simpleOnChangeInputFieldIDs.length; ++i) {
-        document.getElementById(simpleOnChangeInputFieldIDs[i]).onchange = queueDraw;
-        if (i < simpleOnChangeButOnlyForSize2InputFieldIDs.length)
-            document.getElementById(simpleOnChangeButOnlyForSize2InputFieldIDs[i]).onchange = queueDraw;
-    }
-    var recolorInputs = document.getElementsByName("recolor");
-    var alreadyNeededToDetermineCustomAccentColors = false;
-    for (var i = 0; i < recolorInputs.length; ++i)
+    const simpleOnChangeInputFieldIDs = [
+        "title", "description", "type", "credit", "creator", "price", "preview",
+        "type2", "color2split", "boldkeys",
+        "picture-x", "picture-y", "picture-zoom"
+    ];
+
+    const simpleOnChangeButOnlyForSize2InputFieldIDs = ["title2", "description2"];
+
+    for (let id of simpleOnChangeInputFieldIDs)
+        document.getElementById(id).onchange = queueDraw;
+    for (let id of simpleOnChangeButOnlyForSize2InputFieldIDs)
+        document.getElementById(id).onchange = queueDraw;
+
+    const recolorInputs = document.getElementsByName("recolor");
+    let alreadyNeededToDetermineCustomAccentColors = false;
+
+    for (let i = 0; i < recolorInputs.length; ++i)
         recolorInputs[i].onchange = function (i) {
             return function () {
-                var val = parseFloat(this.value);
-                if (val !== NaN) {
-                    var imageID = Math.floor(i / 12);
+                const val = parseFloat(this.value);
+                if (val === val) {
+                    const imageID = Math.floor(i / 12);
                     if (normalColorCurrentIndices[imageID] >= 10) { //potentially recoloring the supposedly Uncolored images
                         recoloredImages[2] = false;
                         recoloredImages[8] = false;
@@ -843,14 +714,14 @@ function initCardImageGenerator() {
         onChangeExternalImage(17, this.value);
     };
 
-    var customIcon = document.getElementById("custom-icon");
+    const customIcon = document.getElementById("custom-icon");
     onChangeExternalImage(images.length - 1, customIcon.value, 156, 156);
     customIcon.onchange = function () {
         //Last Icon = Custom Icon
         onChangeExternalImage(images.length - 1, this.value, 156, 156);
     };
 
-    var genericCustomAccentColors = [
+    const genericCustomAccentColors = [
 		[0, 0, 0, 0, 0, 0, 1, 1, 1, 1.2, 0.8, 0.5],
 		[0, 0, 0, 0, 0, 0, 0.9, 0.8, 0.7, 0.9, 0.8, 0.7]
 	];
@@ -891,59 +762,59 @@ function initCardImageGenerator() {
                 queueDraw(1);
             }
         }(i);
-    var templateSizeInputs = document.getElementsByName("size");
-    for (var i = 0; i < templateSizeInputs.length; ++i)
-        templateSizeInputs[i].onchange = function (i) {
-            return function () {
-                templateSize = parseInt(this.value);
-                document.body.className = this.id;
-                document.getElementById("load-indicator").removeAttribute("style");
-                queueDraw(250);
-            }
-        }(i);
+
+    const templateSizeInputs = document.getElementsByName("size");
+    for (const input of templateSizeInputs)
+        input.onchange = function () {
+            templateSize = parseInt(this.value);
+            document.body.className = this.id;
+            document.getElementById("load-indicator").removeAttribute("style");
+            queueDraw(250);
+        };
 
     //ready to begin: load information from query parameters
     var query = getQueryParams(document.location.search);
-    for (var queryKey in query) {
-        switch (queryKey) {
+    for (const key in query) {
+        const value = query[key];
+        switch (key) {
             case "color0":
-                normalColorCurrentIndices[0] = normalColorDropdowns[0].selectedIndex = query[queryKey];
+                normalColorCurrentIndices[0] = normalColorDropdowns[0].selectedIndex = value;
                 break;
             case "color1":
-                normalColorCurrentIndices[1] = normalColorDropdowns[1].selectedIndex = query[queryKey];
+                normalColorCurrentIndices[1] = normalColorDropdowns[1].selectedIndex = value;
                 break;
             case "size":
-                var buttonElement = document.getElementsByName("size")[templateSize = parseInt(query[queryKey])];
+                const buttonElement = document.getElementsByName("size")[templateSize = parseInt(value)];
                 document.body.className = buttonElement.id;
                 buttonElement.checked = true;
                 break;
             default:
-                var matches = queryKey.match(/^c(\d)\.(\d)$/);
+                let matches = key.match(/^c(\d)\.(\d)$/);
                 if (matches) {
-                    var id = matches[1];
+                    const id = matches[1];
                     normalColorCurrentIndices[id] = normalColorDropdowns[id].selectedIndex = normalColorCustomIndices[id];
                     normalColorDropdowns[id].nextElementSibling.removeAttribute("style");
-                    recolorFactorList[id][matches[2]] = recolorInputs[12 * id + parseInt(matches[2])].value = parseFloat(query[queryKey]);
+                    recolorFactorList[id][matches[2]] = recolorInputs[12 * id + parseInt(matches[2])].value = parseFloat(value);
                 } else {
-                    matches = queryKey.match(/^c(\d)\.(\d)\.(\d)$/);
+                    matches = key.match(/^c(\d)\.(\d)\.(\d)$/);
                     if (matches) {
                         alreadyNeededToDetermineCustomAccentColors = true;
-                        var id = matches[1];
+                        const id = matches[1];
                         normalColorCurrentIndices[id] = normalColorDropdowns[id].selectedIndex = normalColorCustomIndices[id] + 1;
                         normalColorDropdowns[id].nextElementSibling.removeAttribute("style");
                         normalColorDropdowns[id].nextElementSibling.nextElementSibling.removeAttribute("style");
-                        recolorFactorList[id][parseInt(matches[2]) * 3 + parseInt(matches[3])] = recolorInputs[12 * id + 3 * parseInt(matches[2]) + parseInt(matches[3])].value = parseFloat(query[queryKey]);
+                        recolorFactorList[id][parseInt(matches[2]) * 3 + parseInt(matches[3])] = recolorInputs[12 * id + 3 * parseInt(matches[2]) + parseInt(matches[3])].value = parseFloat(value);
                     } else {
-                        var el = document.getElementById(queryKey);
+                        const el = document.getElementById(key);
                         if (el)
-                            el.value = query[queryKey];
+                            el.value = value;
                     }
                 }
                 break;
         }
-        for (var i = 0; i < simpleOnChangeButOnlyForSize2InputFieldIDs.length; ++i)
-            if (!document.getElementById(simpleOnChangeButOnlyForSize2InputFieldIDs[i]).value)
-                document.getElementById(simpleOnChangeButOnlyForSize2InputFieldIDs[i]).value = document.getElementById(simpleOnChangeButOnlyForSize2InputFieldIDs[i].substr(0, simpleOnChangeButOnlyForSize2InputFieldIDs[i].length - 1)).value;
+        for (const id of simpleOnChangeButOnlyForSize2InputFieldIDs)
+            if (!document.getElementById(id).value)
+                document.getElementById(id).value = document.getElementById(id.slice(0, - 1)).value;
     }
     //set the illustration's Source properly and also call queueDraw.
     document.getElementById("picture").onchange();
@@ -956,9 +827,11 @@ function initCardImageGenerator() {
         let creator = document.getElementById("creator").value.trim();
         let pageDefaultTitle = "Dominion Card Image Generator";
         document.title = cardTitle.length > 0 ? (pageDefaultTitle + " - " + cardTitle + " " + creator) : pageDefaultTitle;
-    };
+    }
+
     document.getElementById('title').addEventListener('change', adjustPageTitle, false);
     document.getElementById('creator').addEventListener('change', adjustPageTitle, false);
+
     adjustPageTitle();
 
     //pass parameters to original version to enable easy comparison
@@ -972,11 +845,11 @@ function initCardImageGenerator() {
 function getQueryParams(qs) { //http://stackoverflow.com/questions/979975/how-to-get-the-value-from-the-get-parameters
     qs = qs.split('+').join(' ');
 
-    var params = {},
-        tokens,
-        re = /[?&]?([^&=]+)=?([^&]*)/g;
+    let params = {};
+    let tokens;
+    let re = /[?&]?([^&=]+)=?([^&]*)/g;
 
-    while (tokens = re.exec(qs)) {
+    for (tokens = re.exec(qs); tokens; tokens = re.exec(qs)) {
         params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
     }
 
@@ -987,11 +860,11 @@ function getQueryParams(qs) { //http://stackoverflow.com/questions/979975/how-to
 function downloadPicture() {
 
     function dataURLtoBlob(dataurl) {
-        var arr = dataurl.split(','),
-            mime = arr[0].match(/:(.*?);/)[1],
-            bstr = atob(arr[1]),
-            n = bstr.length,
-            u8arr = new Uint8Array(n);
+        const arr = dataurl.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        let u8arr = new Uint8Array(n);
         while (n--) {
             u8arr[n] = bstr.charCodeAt(n);
         }
@@ -1000,21 +873,19 @@ function downloadPicture() {
         });
     }
 
-    var id;
-    if (templateSize == 0 || templateSize == 2 || templateSize == 3) {
-        id = 0;
-    } else if (templateSize == 1 || templateSize == 4) {
-        id = 1;
-    } else {
-        id = 2;
-    }
-    var link = document.getElementById("download");
-    var canvases = document.getElementsByClassName("myCanvas");
-    var canvas = canvases[id];
-    var image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-    var title = document.getElementById("title").value.trim();
-    var creator = document.getElementById("creator").value.trim();
-    var fileName = "";
+    const id = templateSize === 0 || templateSize === 2 || templateSize === 3 ?
+        0 :
+        templateSize === 1 || templateSize === 4 ?
+            1 :
+            2;
+
+    const link = document.getElementById("download");
+    const canvases = document.getElementsByClassName("myCanvas");
+    const canvas = canvases[id];
+    const image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+    const title = document.getElementById("title").value.trim();
+    const creator = document.getElementById("creator").value.trim();
+    let fileName = "";
     if (title.length > 0) {
         fileName += title;
     } else {
@@ -1026,17 +897,16 @@ function downloadPicture() {
     fileName = fileName.split(" ").join("_");
     fileName += ".png";
     link.setAttribute('download', fileName);
-    var url = (window.webkitURL || window.URL).createObjectURL(dataURLtoBlob(image));
+    const url = (window.webkitURL || window.URL).createObjectURL(dataURLtoBlob(image));
     link.setAttribute("href", url);
 }
 
 
 function Favorites(name) {
-    var name = name;
-    var fav = document.getElementById("manage-favorites");
-    var favList = document.getElementById("favorites-list");
-    var data = localStorage.getItem('favorites') ? JSON.parse(localStorage.getItem('favorites')) : [];
-    var ascending = true;
+    const fav = document.getElementById("manage-favorites");
+    const favList = document.getElementById("favorites-list");
+    let data = localStorage.getItem('favorites') ? JSON.parse(localStorage.getItem('favorites')) : [];
+    let ascending = true;
 
     this.open = function () {
         this.refresh();
@@ -1063,11 +933,11 @@ function Favorites(name) {
     };
     this.load = function (params) {
         window.location.href = this.href + params;
-    }
+    };
     this.save = function () {
         localStorage.setItem('favorites', JSON.stringify(data));
         this.refresh();
-    }
+    };
     this.sort = function () {
         data.sort();
         if (ascending === false) {
@@ -1080,13 +950,13 @@ function Favorites(name) {
         }
         this.save();
         this.refresh();
-    }
+    };
     this.search = function (term) {
         let children = favList.childNodes;
-        for (child in children) {
+        for (const c in children) {
             if (!isNaN(child)) {
                 if (children[child].hasChildNodes()) {
-                    var cardname = children[child].childNodes[0].innerHTML;
+                    const cardname = children[child].childNodes[0].innerHTML;
                     if (cardname.toUpperCase().includes(term.toUpperCase())) {
                         children[child].classList.remove('hidden');
                     } else {
@@ -1095,7 +965,7 @@ function Favorites(name) {
                 }
             }
         }
-    }
+    };
     this.refresh = function (params) {
         data = localStorage.getItem('favorites') ? JSON.parse(localStorage.getItem('favorites')) : [];
 
@@ -1103,24 +973,25 @@ function Favorites(name) {
             favList.removeChild(favList.firstChild);
         }
         data.forEach(function (item) {
-            let title = getQueryParams(item).title == "" ? "<unnamed card>" : getQueryParams(item).title.trim();
-            let types = '[' + getQueryParams(item).type.trim() + '] ';
-            let price = getQueryParams(item).price.replace('^', 'P').trim();
-            title = getQueryParams(item).creator == "" ? title : title + ' ' + getQueryParams(item).creator.split(" ")[0];
-            switch (getQueryParams(item).size) {
+            const queryParams = getQueryParams(item);
+            let title = queryParams.title === "" ? "<unnamed card>" : queryParams.title.trim();
+            let types = '[' + queryParams.type.trim() + '] ';
+            let price = queryParams.price.replace('^', 'P').trim();
+            title = queryParams.creator === "" ? title : title + ' ' + queryParams.creator.split(" ")[0];
+            switch (queryParams.size) {
                 case '0':
-                    title = getQueryParams(item).type.trim() == "" ? title : types + title;
-                    title = price == "" ? title : price + ' ' + title;
+                    title = queryParams.type.trim() === "" ? title : types + title;
+                    title = price === "" ? title : price + ' ' + title;
                     title = "Card: " + title;
                     break;
                 case '1':
-                    title = getQueryParams(item).type.trim() == "" ? title : types + title;
-                    title = price == "" ? title : price + ' ' + title;
+                    title = queryParams.type.trim() === "" ? title : types + title;
+                    title = price === "" ? title : price + ' ' + title;
                     title = "Landscape: " + title;
                     break;
                 case '3':
-                    title = getQueryParams(item).type.trim() == "" ? title : types + title;
-                    title = price == "" ? title : price + ' ' + title;
+                    title = queryParams.type.trim() === "" ? title : types + title;
+                    title = price === "" ? title : price + ' ' + title;
                     title = "Base Card: " + title;
                     break;
                 case '4':

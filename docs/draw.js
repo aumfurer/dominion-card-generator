@@ -1,4 +1,4 @@
-const version = "Gastly.3";
+const version = "Hunter";
 
 document.getElementsByClassName("heading-credits")[0].innerHTML = version;
 
@@ -21,23 +21,41 @@ const iconWithNumbersPatternSingle = RegExp("^([-+]?\\d*)" + iconWithNumbersPatt
 const iconWithNumbersPattern = RegExp("[-+]?" + iconWithNumbersPatternStr, "g");
 const iconAddingNumber = RegExp("\\+(" + iconList + ")\\d+");
 
+const boldableKeywords = [ //case-insensitive
+    "card", "cards",
+    "buy", "buys",
+    "action", "actions",
+    "coffer", "coffers",
+    "villager", "villagers",
+
+    "aktion", "aktionen",
+    "karte", "karten",
+    "kauf", "käufe",
+    "dorfbewohner",
+    "münze", "münzen"
+];
+
 
 class Painter {
 
     /**
      *
      * @param context {CanvasRenderingContext2D}
-     * @param boldLinePatternWords
-     * @param images
-     * @param numberFirstIcon
-     * @param shadowDistance
+     * @param boldWordsExtra {String []}
+     * @param images {Image []}
+     * @param numberFirstIcon {number}
      */
-    constructor(context, boldLinePatternWords, images, numberFirstIcon, shadowDistance) {
+    constructor(context, boldWordsExtra, images, numberFirstIcon) {
         this.context = context;
-        this.boldLinePatternWords = boldLinePatternWords;
+        this.boldLinePatternWords = this.buildBoldLinePatternWords(boldWordsExtra);
         this.images = images;
         this.numberFirstIcon = numberFirstIcon;
-        this.shadowDistance = shadowDistance
+        this.shadowDistance = 10
+    }
+
+    buildBoldLinePatternWords(boldWordsExtra) {
+        let boldKeywordsFull = boldableKeywords.concat(boldWordsExtra);
+        return  RegExp("([-+]\\d+)\\s+(" + boldKeywordsFull.join("|") + ")", "ig");
     }
 
     savingContext(callback){
@@ -260,7 +278,7 @@ class Painter {
     }
 
     writeDescription(description, xCenter, yCenter, maxWidth, maxHeight, boldSize) {
-
+        description = description.replace(/ *\n */g, " \n ").replace(this.boldLinePatternWords, "$1\xa0$2") + " \n";
         let lines;
         let overallHeight;
         let size = 64 + 2;
