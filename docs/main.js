@@ -166,10 +166,17 @@ function initCardImageGenerator() {
         const previewLine = document.getElementById("preview").value;
 
         let isEachColorDark = [false, false];
-        for (let i = 0; i < 2; ++i)
-            isEachColorDark[i] = (i === 1 && normalColorCurrentIndices[1] == 0) ? isEachColorDark[0] : (((normalColorCurrentIndices[i] >= normalColorCustomIndices[i]) ? recolorFactorList[i] : normalColorFactorLists[normalColorCurrentIndices[i] - i][1]).slice(0, 3).reduce(function getSum(total, num) {
-                return total + parseFloat(num);
-            }) <= 1.5);
+
+        function isColorDark(i) {
+            const color = (normalColorCurrentIndices[i] >= normalColorCustomIndices[i]) ?
+                recolorFactorList[i] :
+                normalColorFactorLists[normalColorCurrentIndices[i] - i][1];
+            return color.slice(0, 3).reduce((total, num) => total + parseFloat(num)) <= 1.5;
+        }
+
+        isEachColorDark[0] = isColorDark(0);
+        isEachColorDark[1] = normalColorCurrentIndices[1] === 0 ? isEachColorDark[0] : isColorDark(1);
+
         const differentIntensities = isEachColorDark[0] !== isEachColorDark[1];
 
         if (!(differentIntensities || parseInt(normalColorCurrentIndices[1]) === 0 || parseInt(normalColorCurrentIndices[0]) + 1 === parseInt(normalColorCurrentIndices[1]))) {
@@ -180,10 +187,21 @@ function initCardImageGenerator() {
 
         function actuallyDraw() {
 
+            const descriptionStr = document.getElementById("description").value;
+
             const fields = {
                 creator: document.getElementById("creator").value,
                 credit: document.getElementById("credit").value,
+                description: descriptionStr,
+                description2: document.getElementById("description2").value,
+                title: document.getElementById("title").value,
+                title2: document.getElementById("title2").value,
+                heirloom: document.getElementById("type2").value,
+                type: document.getElementById("type").value,
+                price: document.getElementById("price").value,
+                preview: document.getElementById("preview").value,
             };
+
             const pictureFields = {
                 image: picture,
                 x: parseFloat(pictureX),
@@ -191,16 +209,19 @@ function initCardImageGenerator() {
                 zoom: pictureZoom
             };
 
-            const painter = new Painter(
+
+            const painterTypes = [Painter, Painter, DoubleCardPainter, BaseCardPainter, PileMarkerPainter, MatPainter];
+
+            const painter = new painterTypes[templateSize](
                 context,
                 getExtraBoldWords(),
                 images,
                 numberFirstIcon,
                 pictureFields,
-                fields
+                fields,
+                isEachColorDark,
+                getRecoloredImage,
             );
-
-            const descriptionStr = document.getElementById("description").value;
 
             if (templateSize === 0) { //card
                 painter.drawPicture(704, 706, 1150, 835);
@@ -302,7 +323,9 @@ function initCardImageGenerator() {
                 }
 
                 if (priceLine)
-                    painter.writeLineWithIcons(priceLine + " ", 130, 205, 85 / 90, "Minion", undefined) //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+                    painter.writeLineWithIcons(priceLine + " ", 130, 205, 85 / 90, "Minion");
+                    //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+
                 painter.writeDescription(descriptionStr, 1075, 1107, 1600, 283, 70);
                 painter.writeIllustrationCredit(181, 1272, "black", "bold ");
                 painter.writeCreatorCredit(1969, 1272, "black", "bold ");
@@ -310,159 +333,17 @@ function initCardImageGenerator() {
                 painter.drawExpansionIcon(1930, 1190, 80, 80);
 
             } else if (templateSize === 2) { //double card
-                painter.drawPicture(704, 1075, 1150, 564);
-                painter.removeCorners(1403, 2151, 100);
-
-                if (!recoloredImages[9]) recoloredImages[10] = false;
-                context.drawImage(getRecoloredImage(9, 0), 0, 0); //DoubleColorOne
-                if (!isEachColorDark[0])
-                    context.drawImage(images[3], 44, 1330, images[3].width, images[3].height * 2 / 3); //DescriptionFocus
-                context.save();
-                context.rotate(Math.PI);
-                context.drawImage(getRecoloredImage(10, (normalColorCurrentIndices[1] > 0) ? 1 : 0), -1403, -2151); //DoubleColorOne again, but rotated
-                if (!isEachColorDark[1])
-                    context.drawImage(images[3], 44 - 1403, 1330 - 2151, images[3].width, images[3].height * 2 / 3); //DescriptionFocus
-                context.restore();
-                context.drawImage(images[11], 0, 0); //DoubleUncoloredDetails //todo
-
-                function drawHalfCard(t, l, p, d, colorID) {
-                    context.textAlign = "center";
-                    context.textBaseline = "middle";
-                    //context.font = "small-caps" + context.font;
-                    //writeSingleLine(document.getElementById(l).value, 701, 215, 1180, 75);
-
-                    var recolorFactors;
-                    if (normalColorCurrentIndices[colorID] >= normalColorCustomIndices[colorID])
-                        recolorFactors = recolorFactorList[colorID];
-                    else
-                        recolorFactors = normalColorFactorLists[normalColorCurrentIndices[colorID] - colorID][1];
-
-                    context.save();
-                    var title = document.getElementById(l).value;
-                    var size = 75 + 2;
-                    do {
-                        context.font = (size -= 2) + "pt TrajanPro";
-                    } while (context.measureText(title).width > 750);
-                    context.textAlign = "left";
-                    context.fillStyle = "rgb(" + Math.round(recolorFactors[0] * 224) + "," + Math.round(recolorFactors[1] * 224) + "," + Math.round(recolorFactors[2] * 224) + ")";
-                    context.lineWidth = 15;
-                    if (isEachColorDark[colorID])
-                        context.strokeStyle = "white";
-                    context.strokeText(title, 150, 1287);
-                    context.fillText(title, 150, 1287);
-                    context.restore();
-
-                    if (isEachColorDark[colorID])
-                        context.fillStyle = "white";
-                    painter.writeSingleLine(t, p ? 750 : 701, 1922, p ? 890 : 1190, 64);
-                    if (p)
-                        painter.writeLineWithIcons(p + " ", 153, 1940, 85 / 90, "Minion", undefined)
-                    painter.writeDescription(d, 701, 1600, 960, 460, 64);
-                    context.restore();
-                }
-
-                context.save();
-                drawHalfCard(typeLine, "title", priceLine, descriptionStr, 0);
-                context.save();
-                context.translate(1403, 2151); //bottom right corner
-                context.rotate(Math.PI);
-                painter.shadowDistance = -painter.shadowDistance;
-                const description2 = document.getElementById("description2").value;
-                drawHalfCard(heirloomLine, "title2", previewLine, description2, (normalColorCurrentIndices[1] > 0) ? 1 : 0);
-                painter.shadowDistance = -painter.shadowDistance;
-                painter.writeIllustrationCredit(150, 2038, "white", "");
-                painter.writeCreatorCredit(1253, 2038, "white", "");
-
-                painter.drawExpansionIcon(1230, 1920, 80, 80);
-
+                if (!recoloredImages[9])
+                    recoloredImages[10] = false;
+                painter.extra.recolorFactors = [false, false];
+                painter.extra.colorID = (normalColorCurrentIndices[1] > 0) ? 1 : 0;
+                painter.draw();
             } else if (templateSize === 3) { //base card
-                painter.drawPicture(704, 1075, 1150, 1898);
-                painter.removeCorners(1403, 2151, 100);
-
-                context.drawImage(getRecoloredImage(20, 0), 0, 0); //CardColorOne
-                context.drawImage(getRecoloredImage(21, 0, 6), 0, 0); //CardGray
-                context.drawImage(getRecoloredImage(22, 0, 9), 0, 0); //CardBrown
-
-                context.textAlign = "center";
-                context.textBaseline = "middle";
-                //context.font = "small-caps" + context.font;
-                if (heirloomLine) {
-                    context.drawImage(images[13], 97, 1720); //Heirloom banner
-                    painter.writeSingleLine(heirloomLine, 701, 1799, 1040, 58, "Times New Roman");
-                }
-                if (isEachColorDark[1])
-                    context.fillStyle = "white";
-                painter.writeSingleLine(document.getElementById("title").value, 701, 215, previewLine ? 800 : 1180, 75);
-                if (typeLine.split(" - ").length >= 4) {
-                    let types2 = typeLine.split(" - ");
-                    let types1 = types2.splice(0, Math.ceil(types2.length / 2));
-                    painter.writeSingleLine(types1.join(" - ") + " -", priceLine ? 750 : 701, 1945 - 26, priceLine ? 890 : 1180, 42);
-                    painter.writeSingleLine(types2.join(" - "), priceLine ? 750 : 701, 1945 + 26, priceLine ? 890 : 1180, 42);
-                } else {
-                    if (expansion.height > 0 && expansion.width > 0) {
-                        painter.writeSingleLine(typeLine, priceLine ? 730 : 701, 1945, priceLine ? 800 : 900, 64);
-                    } else {
-                        painter.writeSingleLine(typeLine, priceLine ? 750 : 701, 1945, priceLine ? 890 : 1180, 64);
-                    }
-                }
-                if (priceLine)
-                    painter.writeLineWithIcons(priceLine + " ", 153, 1947, 85 / 90, "Minion"); //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
-                if (previewLine) {
-                    painter.writeSingleLine(previewLine + " ", 223, 210, 0, 0, "Minion");
-                    painter.writeSingleLine(previewLine + " ", 1203, 210, 0, 0, "Minion");
-                }
-                context.fillStyle = (isEachColorDark[0]) ? "white" : "black";
-                if (!heirloomLine)
-                    painter.writeDescription(descriptionStr, 701, 1060, 960, 1500, 64);
-                else
-                    painter.writeDescription(descriptionStr, 701, 1000, 960, 1400, 64);
-                painter.writeIllustrationCredit(165, 2045, "white", "");
-                painter.writeCreatorCredit(1225, 2045, "white", "");
-
-                painter.drawExpansionIcon(1230, 1945, 80, 80);
+                painter.draw();
             } else if (templateSize === 4) { //pile marker
-                painter.drawPicture(1075, 702, 1250, 870);
-                painter.removeCorners(2151, 1403, 100);
-
-                context.drawImage(getRecoloredImage(24, 0, 6), 0, 0); //CardGray
-                context.drawImage(getRecoloredImage(23, 0), 0, 0); //CardColorOne
-
-                context.textAlign = "center";
-                context.textBaseline = "middle";
-
-                context.save();
-                if (isEachColorDark[1])
-                    context.fillStyle = "white";
-                context.rotate(Math.PI / 2);
-                painter.writeSingleLine(document.getElementById("title").value, 700, -1920, 500, 75);
-                context.restore();
-                context.save();
-                if (isEachColorDark[1])
-                    context.fillStyle = "white";
-                context.rotate(Math.PI * 3 / 2);
-                painter.writeSingleLine(document.getElementById("title").value, -700, 230, 500, 75);
-                context.restore();
+                painter.draw();
             } else if (templateSize === 5) { //player mat
-                painter.drawPicture(464, 342, 928, 684);
-
-                context.drawImage(getRecoloredImage(25, 0, 6), 0, 0); //MatBannerTop
-                if (document.getElementById("description").value.trim().length > 0)
-                    context.drawImage(getRecoloredImage(26, 0, 6), 0, 0); //MatBannerBottom
-
-                context.textAlign = "center";
-                context.textBaseline = "middle";
-
-                if (isEachColorDark[1])
-                    context.fillStyle = "white";
-                painter.writeSingleLine(document.getElementById("title").value, 464, 96, 490, 55);
-
-                painter.writeDescription(descriptionStr, 464, 572, 740, 80, 44);
-                painter.writeDescription(descriptionStr, 464, 572, 740, 80, 44);
-
-                painter.writeIllustrationCredit(15, 660, "white", "", 16);
-                painter.writeCreatorCredit(913, 660, "white", "", 16);
-
-                painter.drawExpansionIcon(888, 40, 40, 40);
+                painter.draw();
             }
         }
 
@@ -678,7 +559,7 @@ function initCardImageGenerator() {
 		[0, 0, 0, 0, 0, 0, 1, 1, 1, 1.2, 0.8, 0.5],
 		[0, 0, 0, 0, 0, 0, 0.9, 0.8, 0.7, 0.9, 0.8, 0.7]
 	];
-    for (i = 0; i < normalColorDropdowns.length; ++i)
+    for (let i = 0; i < normalColorDropdowns.length; ++i)
         normalColorDropdowns[i].onchange = function (i) {
             return function () {
                 if (normalColorCurrentIndices[i] >= 10 || this.selectedIndex >= 10) { //potentially recoloring the supposedly Uncolored images
@@ -731,10 +612,10 @@ function initCardImageGenerator() {
         const value = query[key];
         switch (key) {
             case "color0":
-                normalColorCurrentIndices[0] = normalColorDropdowns[0].selectedIndex = value;
+                normalColorCurrentIndices[0] = normalColorDropdowns[0].selectedIndex = parseInt(value);
                 break;
             case "color1":
-                normalColorCurrentIndices[1] = normalColorDropdowns[1].selectedIndex = value;
+                normalColorCurrentIndices[1] = normalColorDropdowns[1].selectedIndex = parseInt(value);
                 break;
             case "size":
                 const buttonElement = document.getElementsByName("size")[templateSize = parseInt(value)];

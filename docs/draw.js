@@ -45,7 +45,13 @@ class Painter {
      * @param images {HTMLImageElement []}
      * @param numberFirstIcon {number}
      * @param picture {{image: HTMLImageElement, x: number, y: number, zoom: number}}
-     * @param fields {{creator: string, credit: string}}
+     * @param fields {{
+     *          creator: string, credit: string, description: string, title: string,
+     *          heirloom: string, type: string, price: string, preview: string
+     *          description2: string, title2: string
+     *          }}
+     * @param isEachColorDark {boolean[]}
+     * @param getRecoloredImage {{function(int,int,int=):HTMLImageElement}}
      */
     constructor(
         context,
@@ -53,7 +59,9 @@ class Painter {
         images,
         numberFirstIcon,
         picture,
-        fields
+        fields,
+        isEachColorDark,
+        getRecoloredImage,
     ) {
         this.context = context;
         this.boldLinePatternWords = this.buildBoldLinePatternWords(boldWordsExtra);
@@ -61,7 +69,10 @@ class Painter {
         this.numberFirstIcon = numberFirstIcon;
         this.picture = picture;
         this.fields = fields;
-        this.shadowDistance = 10
+        this.isEachColorDark = isEachColorDark;
+        this.getRecoloredImage = getRecoloredImage;
+        this.extra = {};
+        this.shadowDistance = 10;
     }
 
     buildBoldLinePatternWords(boldWordsExtra) {
@@ -369,5 +380,181 @@ class Painter {
             this.context.restore();
         }
     }
+}
 
+class DoubleCardPainter extends Painter {
+
+    drawHalfCard(t, title, price, description, colorID) {
+        this.context.textAlign = "center";
+        this.context.textBaseline = "middle";
+        //context.font = "small-caps" + context.font;
+        //writeSingleLine(document.getElementById(l).value, 701, 215, 1180, 75);
+
+        this.context.save();
+
+        let size = 75 + 2;
+        do {
+            this.context.font = (size -= 2) + "pt TrajanPro";
+        } while (this.context.measureText(title).width > 750);
+
+        this.context.textAlign = "left";
+        this.context.fillStyle = "rgb(" + this.extra.recolorFactors[colorID].slice(0, 3).map(x => Math.round(x*224)).join(",") + ")";
+        this.context.lineWidth = 15;
+        if (this.isEachColorDark[colorID])
+            this.context.strokeStyle = "white";
+        this.context.strokeText(title, 150, 1287);
+        this.context.fillText(title, 150, 1287);
+        this.context.restore();
+
+        if (this.isEachColorDark[colorID])
+            this.context.fillStyle = "white";
+
+        this.writeSingleLine(t, price ? 750 : 701, 1922, price ? 890 : 1190, 64);
+        if (price)
+            this.writeLineWithIcons(price + " ", 153, 1940, 85 / 90, "Minion", undefined);
+        this.writeDescription(description, 701, 1600, 960, 460, 64);
+        this.context.restore();
+    }
+
+    draw() {
+        this.drawPicture(704, 1075, 1150, 564);
+        this.removeCorners(1403, 2151, 100);
+
+        const colorID = this.extra.colorID;
+
+        this.context.drawImage(this.getRecoloredImage(9, 0), 0, 0); //DoubleColorOne
+        if (!this.isEachColorDark[0])
+            this.context.drawImage(this.images[3], 44, 1330, this.images[3].width, this.images[3].height * 2 / 3); //DescriptionFocus
+        this.context.save();
+        this.context.rotate(Math.PI);
+
+        this.context.drawImage(this.getRecoloredImage(10, colorID), -1403, -2151); //DoubleColorOne again, but rotated
+        if (!this.isEachColorDark[1])
+            this.context.drawImage(this.images[3], 44 - 1403, 1330 - 2151, this.images[3].width, this.images[3].height * 2 / 3); //DescriptionFocus
+        this.context.restore();
+        this.context.drawImage(this.images[11], 0, 0); //DoubleUncoloredDetails //todo
+
+        this.context.save();
+        this.drawHalfCard(this.fields.type, this.fields.title, this.fields.price, this.fields.description, 0);
+        this.context.save();
+        this.context.translate(1403, 2151); //bottom right corner
+        this.context.rotate(Math.PI);
+        this.shadowDistance = -this.shadowDistance;
+        this.drawHalfCard(this.fields.heirloom, this.fields.title2, this.fields.preview, this.fields.description2, colorID);
+        this.shadowDistance = -this.shadowDistance;
+        this.writeIllustrationCredit(150, 2038, "white", "");
+        this.writeCreatorCredit(1253, 2038, "white", "");
+
+        this.drawExpansionIcon(1230, 1920, 80, 80);
+    }
+}
+
+class BaseCardPainter extends Painter {
+    draw() {
+        this.drawPicture(704, 1075, 1150, 1898);
+        this.removeCorners(1403, 2151, 100);
+
+        this.context.drawImage(this.getRecoloredImage(20, 0), 0, 0); //CardColorOne
+        this.context.drawImage(this.getRecoloredImage(21, 0, 6), 0, 0); //CardGray
+        this.context.drawImage(this.getRecoloredImage(22, 0, 9), 0, 0); //CardBrown
+
+        this.context.textAlign = "center";
+        this.context.textBaseline = "middle";
+
+        if (this.fields.heirloom) {
+            this.context.drawImage(this.images[13], 97, 1720); //Heirloom banner
+            this.writeSingleLine(this.fields.heirloom, 701, 1799, 1040, 58, "Times New Roman");
+        }
+
+        if (this.isEachColorDark[1])
+            this.context.fillStyle = "white";
+        this.writeSingleLine(this.fields.title, 701, 215, this.fields.preview ? 800 : 1180, 75);
+
+        if (this.fields.type.split(" - ").length >= 4) {
+            let types2 = this.fields.type.split(" - ");
+            let types1 = types2.splice(0, Math.ceil(types2.length / 2));
+            this.writeSingleLine(types1.join(" - ") + " -", this.fields.price ? 750 : 701, 1945 - 26, this.fields.price ? 890 : 1180, 42);
+            this.writeSingleLine(types2.join(" - "), this.fields.price ? 750 : 701, 1945 + 26, this.fields.price ? 890 : 1180, 42);
+        } else {
+            if (this.images[17].height > 0 && this.images[17].width > 0) {
+                this.writeSingleLine(this.fields.type, this.fields.price ? 730 : 701, 1945, this.fields.price ? 800 : 900, 64);
+            } else {
+                this.writeSingleLine(this.fields.type, this.fields.price ? 750 : 701, 1945, this.fields.price ? 890 : 1180, 64);
+            }
+        }
+
+        if (this.fields.price)
+            this.writeLineWithIcons(this.fields.price + " ", 153, 1947, 85 / 90, "Minion"); //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+
+        if (this.fields.preview) {
+            this.writeSingleLine(this.fields.preview + " ", 223, 210, 0, 0, "Minion");
+            this.writeSingleLine(this.fields.preview + " ", 1203, 210, 0, 0, "Minion");
+        }
+
+        this.context.fillStyle = (this.isEachColorDark[0]) ? "white" : "black";
+
+        if (!this.fields.heirloom)
+            this.writeDescription(this.fields.description, 701, 1060, 960, 1500, 64);
+        else
+            this.writeDescription(this.fields.description, 701, 1000, 960, 1400, 64);
+
+        this.writeIllustrationCredit(165, 2045, "white", "");
+        this.writeCreatorCredit(1225, 2045, "white", "");
+
+        this.drawExpansionIcon(1230, 1945, 80, 80);
+    }
+}
+
+
+class PileMarkerPainter extends Painter {
+    draw(){
+        this.drawPicture(1075, 702, 1250, 870);
+        this.removeCorners(2151, 1403, 100);
+
+        this.context.drawImage(this.getRecoloredImage(24, 0, 6), 0, 0); //CardGray
+        this.context.drawImage(this.getRecoloredImage(23, 0), 0, 0); //CardColorOne
+
+        this.context.textAlign = "center";
+        this.context.textBaseline = "middle";
+
+        this.context.save();
+        if (this.isEachColorDark[1])
+            this.context.fillStyle = "white";
+        this.context.rotate(Math.PI / 2);
+        this.writeSingleLine(this.fields.title, 700, -1920, 500, 75);
+        this.context.restore();
+
+        this.context.save();
+        if (this.isEachColorDark[1])
+            this.context.fillStyle = "white";
+        this.context.rotate(Math.PI * 3 / 2);
+        this.writeSingleLine(this.fields.title, -700, 230, 500, 75);
+        this.context.restore();
+    }
+}
+
+class MatPainter extends Painter {
+
+    draw(){
+        this.drawPicture(464, 342, 928, 684);
+
+        this.context.drawImage(this.getRecoloredImage(25, 0, 6), 0, 0); //MatBannerTop
+        if (this.fields.description.trim().length > 0)
+            this.context.drawImage(this.getRecoloredImage(26, 0, 6), 0, 0); //MatBannerBottom
+
+        this.context.textAlign = "center";
+        this.context.textBaseline = "middle";
+
+        if (this.isEachColorDark[1])
+            this.context.fillStyle = "white";
+        this.writeSingleLine(this.fields.title, 464, 96, 490, 55);
+
+        this.writeDescription(this.fields.description, 464, 572, 740, 80, 44);
+        this.writeDescription(this.fields.description, 464, 572, 740, 80, 44);
+
+        this.writeIllustrationCredit(15, 660, "white", "", 16);
+        this.writeCreatorCredit(913, 660, "white", "", 16);
+
+        this.drawExpansionIcon(888, 40, 40, 40);
+    }
 }
