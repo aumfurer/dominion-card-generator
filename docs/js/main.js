@@ -1,7 +1,8 @@
-var templateSize = 0; //save globally
+let templateSize = 0; //save globally
+const templateSizeCanvas = [0, 1, 0, 0, 1, 2];
 
 Array.prototype.remove = function () {
-    var what, a = arguments,
+    let what, a = arguments,
         L = a.length,
         ax;
     while (L && this.length) {
@@ -55,23 +56,40 @@ function initCardImageGenerator() {
         normalColorDropdowns[j].selectedIndex = 0;
     }
 
-    function getExtraBoldWords() {
-        let elemBoldkeys = document.getElementById("boldkeys");
-        let boldExtraKeys = elemBoldkeys !== null ? elemBoldkeys.value : "";
-        return boldExtraKeys.split(";").filter(x => x !== "")
-    }
-
     const canvases = document.getElementsByClassName("myCanvas");
     let images = [];
     let imagesLoaded = false;
+
+    const normalColorCurrentIndices = [0, 0];
 
     let recolorFactorList = [
         [0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6],
         [0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6]
     ];
 
-    const normalColorCurrentIndices = [0, 0];
+    let isEachColorDark = [false, false];
+
+    function isColorDark(i) {
+        const color = (normalColorCurrentIndices[i] >= normalColorCustomIndices[i]) ?
+            recolorFactorList[i] :
+            normalColorFactorLists[normalColorCurrentIndices[i] - i][1];
+        return color.slice(0, 3).reduce((total, num) => total + parseFloat(num)) <= 1.5;
+    }
+
     let recoloredImages = [];
+
+    // Depends on normalColorCurrentIndices, normalColorCustomIndices, recolorFactorList, normalColorFactorLists
+    function updateIsEachColorDark() {
+        isEachColorDark[0] = isColorDark(0);
+        isEachColorDark[1] = normalColorCurrentIndices[1] === 0 ? isEachColorDark[0] : isColorDark(1);
+
+        const splitSelector = document.getElementById('color2splitselector');
+        if (isEachColorDark[0] !== isEachColorDark[1] || normalColorCurrentIndices[1] === 0 || normalColorCurrentIndices[0] + 1 === normalColorCurrentIndices[1]) {
+            splitSelector.setAttribute("style", "display:none");
+        } else {
+            splitSelector.removeAttribute("style");
+        }
+    }
 
     function draw() {
 
@@ -137,28 +155,7 @@ function initCardImageGenerator() {
         for (let c of canvases)
             c.getContext("2d").clearRect(0, 0, c.width, c.height);
 
-        const templateSizeCanvas = [0, 1, 0, 0, 1, 2];
-
-        let isEachColorDark = [false, false];
-
-        function isColorDark(i) {
-            const color = (normalColorCurrentIndices[i] >= normalColorCustomIndices[i]) ?
-                recolorFactorList[i] :
-                normalColorFactorLists[normalColorCurrentIndices[i] - i][1];
-            return color.slice(0, 3).reduce((total, num) => total + parseFloat(num)) <= 1.5;
-        }
-
-        isEachColorDark[0] = isColorDark(0);
-        isEachColorDark[1] = normalColorCurrentIndices[1] === 0 ? isEachColorDark[0] : isColorDark(1);
-
-        const differentIntensities = isEachColorDark[0] !== isEachColorDark[1];
-
-        const splitSelector = document.getElementById('color2splitselector');
-        if (!(differentIntensities || normalColorCurrentIndices[1] === 0 || normalColorCurrentIndices[0] + 1 === normalColorCurrentIndices[1])) {
-            splitSelector.removeAttribute("style");
-        } else {
-            splitSelector.setAttribute("style", "display:none");
-        }
+        updateIsEachColorDark();
 
         const fields = {
             creator: document.getElementById("creator").value,
@@ -176,26 +173,21 @@ function initCardImageGenerator() {
             color2: normalColorCurrentIndices[1] - 1,
             pictureX: parseFloat(document.getElementById("picture-x").value),
             pictureY: parseFloat(document.getElementById("picture-y").value),
-            pictureZoom: document.getElementById("picture-zoom").value
+            pictureZoom: document.getElementById("picture-zoom").value,
+            extraBoldKeys: document.getElementById("boldkeys").value,
         };
 
         const painterTypes = [CardPainter, EventPainter, DoubleCardPainter, BaseCardPainter, PileMarkerPainter, MatPainter];
 
         const painter = new painterTypes[templateSize](
             canvases[templateSizeCanvas[templateSize]].getContext("2d"),
-            getExtraBoldWords(),
             images,
-            numberFirstIcon,
             fields,
             isEachColorDark,
             getRecoloredImage,
         );
 
-        if (templateSize === 2) { //double card
-            if (!recoloredImages[9])
-                recoloredImages[10] = false;
-            painter.extra.recolorFactors = [false, false];
-        }
+        painter.extra.recolorFactors = [false, false];
         painter.draw();
 
         updateURL();
@@ -361,6 +353,8 @@ function initCardImageGenerator() {
                     recoloredImages[imageID] = false;
                     recoloredImages[imageID + 6] = false;
                     recoloredImages[imageID + 9] = false;
+                    if (imageID === 0)
+                        recoloredImages[10] = false;
                     recoloredImages[12] = false;
                     recoloredImages[18] = false;
                     recoloredImages[19] = false;
@@ -408,46 +402,60 @@ function initCardImageGenerator() {
         [0, 0, 0, 0, 0, 0, 1, 1, 1, 1.2, 0.8, 0.5],
         [0, 0, 0, 0, 0, 0, 0.9, 0.8, 0.7, 0.9, 0.8, 0.7]
     ];
-    for (let i = 0; i < normalColorDropdowns.length; ++i)
-        normalColorDropdowns[i].onchange = function (i) {
-            return function () {
-                if (normalColorCurrentIndices[i] >= 10 || this.selectedIndex >= 10) { //potentially recoloring the supposedly Uncolored images
-                    recoloredImages[8] = false;
-                    recoloredImages[11] = false;
-                    recoloredImages[15] = false;
-                    recoloredImages[16] = false;
-                }
-                normalColorCurrentIndices[i] = this.selectedIndex;
-                recoloredImages[i] = false;
-                recoloredImages[i + 6] = false;
-                recoloredImages[i + 9] = false;
-                recoloredImages[2] = false;
-                recoloredImages[12] = false;
-                recoloredImages[18] = false;
-                recoloredImages[19] = false;
-                recoloredImages[20] = false;
-                recoloredImages[23] = false;
-                var delta = normalColorCustomIndices[i] - this.selectedIndex;
-                if (delta <= 0)
-                    this.nextElementSibling.removeAttribute("style");
-                else
-                    this.nextElementSibling.setAttribute("style", "display:none;");
-                if (delta === -1) {
-                    this.nextElementSibling.nextElementSibling.removeAttribute("style");
-                    if (i === 0 && !alreadyNeededToDetermineCustomAccentColors) {
-                        alreadyNeededToDetermineCustomAccentColors = true;
-                        for (var j = 6; j < 12; ++j)
-                            recolorFactorList[0][j] = recolorInputs[j].value = genericCustomAccentColors[templateSize & 1][j];
-                    }
-                } else
-                    this.nextElementSibling.nextElementSibling.setAttribute("style", "display:none;");
-                queueDraw(1);
-            }
-        }(i);
+
+    function normalColorDropDownChanges(colorID, event) {
+        const dropdown = event.currentTarget;
+        if (normalColorCurrentIndices[colorID] >= 10 || dropdown.selectedIndex >= 10) { //potentially recoloring the supposedly Uncolored images
+            recoloredImages[8] = false;
+            recoloredImages[11] = false;
+            recoloredImages[15] = false;
+            recoloredImages[16] = false;
+        }
+        normalColorCurrentIndices[colorID] = dropdown.selectedIndex;
+        recoloredImages[colorID] = false;
+        recoloredImages[colorID + 6] = false;
+        recoloredImages[colorID + 9] = false;
+        if (colorID === 0)
+            recoloredImages[10] = false;
+        recoloredImages[2] = false;
+        recoloredImages[12] = false;
+        recoloredImages[18] = false;
+        recoloredImages[19] = false;
+        recoloredImages[20] = false;
+        recoloredImages[23] = false;
+
+        const customColorFields = dropdown.nextElementSibling;
+        const extraCustomColorFields = customColorFields.nextElementSibling;
+
+        const delta = normalColorCustomIndices[colorID] - dropdown.selectedIndex;
+
+        if (delta <= 0)
+            customColorFields.removeAttribute("style");
+        else
+            customColorFields.setAttribute("style", "display:none;");
+
+        if (delta === -1)
+            extraCustomColorFields.removeAttribute("style");
+        else
+            extraCustomColorFields.setAttribute("style", "display:none;");
+
+        if (delta === -1 && colorID === 0 && !alreadyNeededToDetermineCustomAccentColors) {
+            alreadyNeededToDetermineCustomAccentColors = true;
+            for (let j = 6; j < 12; ++j)
+                recolorFactorList[0][j] = recolorInputs[j].value = genericCustomAccentColors[templateSize & 1][j];
+        }
+
+        updateIsEachColorDark();
+        queueDraw(1);
+        console.log({colorID})
+    }
+
+    normalColorDropdowns[0].onchange = (event) => normalColorDropDownChanges(0, event);
+    normalColorDropdowns[1].onchange = (event) => normalColorDropDownChanges(1, event);
 
     const templateSizeInputs = document.getElementsByName("size");
-    for (const input of templateSizeInputs)
-        input.onchange = function () {
+    for (const template of templateSizeInputs)
+        template.onchange = function (e) {
             templateSize = parseInt(this.value);
             document.body.className = this.id;
             document.getElementById("load-indicator").removeAttribute("style");
@@ -522,6 +530,9 @@ function initCardImageGenerator() {
         window.location.href = this.href + document.location.search;
     }, false);
 
+
+    updateIsEachColorDark();
+
 }
 
 function getQueryParams(qs) { //http://stackoverflow.com/questions/979975/how-to-get-the-value-from-the-get-parameters
@@ -555,30 +566,19 @@ function downloadPicture() {
         });
     }
 
-    const id = templateSize === 0 || templateSize === 2 || templateSize === 3 ?
-        0 :
-        templateSize === 1 || templateSize === 4 ?
-            1 :
-            2;
+    function cardFilename(title, creator) {
+        let fileName = title.length > 0 ? title : "card";
+        if (creator.length > 0)
+            fileName += "_" + creator.split(" ")[0];
+        return fileName.replace(/ /g, "_") + '.png';
+    }
 
     const link = document.getElementById("download");
-    const canvases = document.getElementsByClassName("myCanvas");
-    const canvas = canvases[id];
+    const canvas = (document.getElementsByClassName("myCanvas"))[templateSizeCanvas[templateSize]];
     const image = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
     const title = document.getElementById("title").value.trim();
     const creator = document.getElementById("creator").value.trim();
-    let fileName = "";
-    if (title.length > 0) {
-        fileName += title;
-    } else {
-        fileName += "card";
-    }
-    if (creator.length > 0) {
-        fileName += "_" + creator.split(" ")[0];
-    }
-    fileName = fileName.split(" ").join("_");
-    fileName += ".png";
-    link.setAttribute('download', fileName);
+    link.setAttribute('download', cardFilename(title, creator));
     const url = (window.webkitURL || window.URL).createObjectURL(dataURLtoBlob(image));
     link.setAttribute("href", url);
 }

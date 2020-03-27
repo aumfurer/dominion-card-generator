@@ -47,40 +47,40 @@ class Painter {
      * @param context {CanvasRenderingContext2D}
      * @param boldWordsExtra {String []}
      * @param images {HTMLImageElement []}
-     * @param numberFirstIcon {number}
      * @param fields {{
      *          creator: string, credit: string, description: string, title: string,
      *          heirloom: string, type: string, price: string, preview: string
      *          description2: string, title2: string, color2split: number,
      *          color1: int, color2: int,
-     *          pictureX: number, pictureY: number, pictureZoom: number
+     *          pictureX: number, pictureY: number, pictureZoom: number,
+     *          extraBoldKeys: string
      *          }}
      * @param isEachColorDark {boolean[]}
      * @param getRecoloredImage {{function(int,int,int=):HTMLImageElement}}
      */
     constructor(
         context,
-        boldWordsExtra,
         images,
-        numberFirstIcon,
         fields,
         isEachColorDark,
         getRecoloredImage,
     ) {
         this.context = context;
-        this.boldLinePatternWords = this.buildBoldLinePatternWords(boldWordsExtra);
         this.images = images;
-        this.numberFirstIcon = numberFirstIcon;
         this.fields = fields;
         this.isEachColorDark = isEachColorDark;
         this.getRecoloredImage = getRecoloredImage;
+
+        this.boldLinePatternWords = this.buildBoldLinePatternWords(fields.extraBoldKeys);
         this.extra = {};
+        this.numberFirstIcon = -1;
         this.shadowDistance = 10;
     }
 
-    buildBoldLinePatternWords(boldWordsExtra) {
-        let boldKeywordsFull = boldableKeywords.concat(boldWordsExtra);
-        return  RegExp("([-+]\\d+)\\s+(" + boldKeywordsFull.join("|") + ")", "ig");
+    buildBoldLinePatternWords(extraBoldKeys) {
+        const extra = extraBoldKeys.split(";").filter(x => x !== "")
+        const all = boldableKeywords.concat(extra);
+        return  RegExp("([-+]\\d+)\\s+(" + all.join("|") + ")", "ig");
     }
 
     savingContext(callback){
@@ -122,8 +122,7 @@ class Painter {
         }
         const halfWidthOfSpaces = this.context.measureText(iconReplacedWithSpaces).width / 2 + 2;
 
-        const iconIndex = Object.keys(icons).indexOf(icon);
-        const image = iconIndex !== -1 && this.images[this.numberFirstIcon + iconIndex];
+        const image = this.getIcon(icon);
 
         this.savingContext(() => {
             if (frontValue) {
@@ -161,6 +160,17 @@ class Painter {
         });
         x += halfWidthOfSpaces;
         return x;
+    }
+
+    getIcon(icon) {
+        if (this.numberFirstIcon === -1){
+            const firstIconName = Object.values(icons)[0][0];
+            this.numberFirstIcon = this.images
+                 .map(x => x.src)
+                 .findIndex(x => x.includes('/'+firstIconName+'.'))
+        }
+        const iconIndex = Object.keys(icons).indexOf(icon);
+        return iconIndex !== -1 && this.images[this.numberFirstIcon + iconIndex];
     }
 
     drawSpecialCost(specialCost, cost, bigNumberScale, scale, nx) {

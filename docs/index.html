@@ -43,7 +43,7 @@
             }
         } else {
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('sw.js');
+                navigator.serviceWorker.register('js/sw.js');
             }
         }
 
@@ -53,8 +53,8 @@
         }
 
     </script>
-    <script defer src="draw.js"></script>
-    <script defer src="main.js" onload="initialize()"></script>
+    <script defer src="js/draw.js"></script>
+    <script defer src="js/main.js" onload="initialize()"></script>
 </head>
 
 <body class="size0">
