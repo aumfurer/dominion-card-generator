@@ -5,6 +5,7 @@ document.getElementsByClassName("heading-credits")[0].innerHTML = version;
 
 const italicSubstrings = ["[i]", "Heirloom: ", "Erbstück: ", "This is not in the supply.", "Keep this until Clean-up."];
 const iconReplacedWithSpaces = "     ";
+const travellerTypesPattern = new RegExp(["Traveller", "Traveler", "Reisender", "Reisende"].join("|"));
 
 const icons = { //the names should match the image filenames (plus a .png extension).
     "@": ["Debt", "white", "Treasure"],
@@ -22,18 +23,21 @@ const iconWithNumbersPattern = RegExp("[-+]?" + iconWithNumbersPatternStr, "g");
 const iconAddingNumber = RegExp("\\+(" + iconList + ")\\d+");
 
 const boldableKeywords = [ //case-insensitive
-    "card", "cards",
-    "buy", "buys",
-    "action", "actions",
-    "coffer", "coffers",
-    "villager", "villagers",
+    "cards?",
+    "buys?",
+    "actions?",
+    "coffers?",
+    "villagers?",
 
-    "aktion", "aktionen",
-    "karte", "karten",
+    "aktion(?:en)?",
+    "karten?",
     "kauf", "käufe",
     "dorfbewohner",
-    "münze", "münzen"
+    "münzen?",
 ];
+
+const COLOR_SAME = -1;
+const COLOR_NORMAL = 0;
 
 
 class Painter {
@@ -44,11 +48,12 @@ class Painter {
      * @param boldWordsExtra {String []}
      * @param images {HTMLImageElement []}
      * @param numberFirstIcon {number}
-     * @param picture {{image: HTMLImageElement, x: number, y: number, zoom: number}}
      * @param fields {{
      *          creator: string, credit: string, description: string, title: string,
      *          heirloom: string, type: string, price: string, preview: string
-     *          description2: string, title2: string
+     *          description2: string, title2: string, color2split: number,
+     *          color1: int, color2: int,
+     *          pictureX: number, pictureY: number, pictureZoom: number
      *          }}
      * @param isEachColorDark {boolean[]}
      * @param getRecoloredImage {{function(int,int,int=):HTMLImageElement}}
@@ -58,7 +63,6 @@ class Painter {
         boldWordsExtra,
         images,
         numberFirstIcon,
-        picture,
         fields,
         isEachColorDark,
         getRecoloredImage,
@@ -67,7 +71,6 @@ class Painter {
         this.boldLinePatternWords = this.buildBoldLinePatternWords(boldWordsExtra);
         this.images = images;
         this.numberFirstIcon = numberFirstIcon;
-        this.picture = picture;
         this.fields = fields;
         this.isEachColorDark = isEachColorDark;
         this.getRecoloredImage = getRecoloredImage;
@@ -95,14 +98,12 @@ class Painter {
                     attr + ' ' + this.context.font;
     }
 
-    bigIconProps(templateSize, word, scale){
+    bigIconProps(word, scale){
         return {
             dy: 115 - 48 * scale,
-            dx: templateSize === 3 ? 0 : 48 * scale,
-            scale: templateSize === 3 ?
-                (word.includes('$') ? 3.2 : 2.4) :
-                1.6,
-            font: templateSize === 3 ? "bold 222pt Minion" : "bold 192pt Minion"
+            dx: 48 * scale,
+            scale: 1.6,
+            font: "bold 192pt Minion"
         }
     }
 
@@ -113,7 +114,7 @@ class Painter {
 
     drawIconSingle(y, scale, isSingleLine, x, word, frontValue, icon, cost, specialCost) {
         if (isSingleLine && !word.match(iconAddingNumber)) {
-            const big = this.bigIconProps(templateSize, word, scale);
+            const big = this.bigIconProps(word, scale);
             x += big.dx;
             y += big.dy;
             scale = big.scale;
@@ -326,20 +327,20 @@ class Painter {
     }
 
     drawPicture(xCenter, yCenter, width, height) {
-        const image = this.picture.image;
+        const image = this.images[5];
         if (image.height) {
             const scale = Math.max(height / image.height, width / image.width);
 
-            let sizeX = image.width * scale * this.picture.zoom;
-            let sizeY = image.height * scale * this.picture.zoom;
+            let sizeX = image.width * scale * this.fields.pictureZoom;
+            let sizeY = image.height * scale * this.fields.pictureZoom;
             let spaceX = sizeX - width;
             let spaceY = sizeY - height;
-            let moveX = this.picture.x * spaceX / 2;
-            let moveY = this.picture.y * spaceY / 2;
+            let moveX = this.fields.pictureX * spaceX / 2;
+            let moveY = this.fields.pictureY * spaceY / 2;
 
             this.savingContext(()=>{
                 this.context.translate(xCenter + moveX, yCenter + moveY);
-                this.context.scale(scale * this.picture.zoom, scale * this.picture.zoom);
+                this.context.scale(scale * this.fields.pictureZoom, scale * this.fields.pictureZoom);
                 this.context.drawImage(image, image.width / -2, image.height / -2);
             })
         }
@@ -382,13 +383,142 @@ class Painter {
     }
 }
 
+class CardPainter extends Painter {
+
+    draw() {
+        this.context.save();
+        const regexNumberPriceIcons = new RegExp("[" + Object.keys(icons).join("") + "]", "g");
+        const numberPriceIcons = (this.fields.price.match(regexNumberPriceIcons) || []).length;
+
+        this.drawPicture(704, 706, 1150, 835);
+        this.removeCorners(1403, 2151, 100);
+
+        this.context.drawImage(this.getRecoloredImage(0, 0), 0, 0); //CardColorOne
+
+        if (this.fields.color2 !== COLOR_SAME) {
+            let splitPosition = this.fields.color2split;
+            let sameIntensities = this.isEachColorDark[0] === this.isEachColorDark[1];
+            const colorID = sameIntensities ? splitPosition : 12;
+            this.context.drawImage(this.getRecoloredImage(colorID, 1), 0, 0); //CardColorTwo
+        }
+        this.context.drawImage(this.getRecoloredImage(2, 0, 6), 0, 0); //CardGray
+        this.context.drawImage(this.getRecoloredImage(16, 0, 9), 0, 0); //CardBrown
+
+        const shouldDrawFocus =
+            this.fields.color1 !== COLOR_NORMAL &&
+            !this.isEachColorDark[0] &&
+            this.fields.color2 === COLOR_SAME;
+
+        if (shouldDrawFocus) //single (non-Action, non-Night) color
+            this.context.drawImage(this.images[3], 44, 1094); //DescriptionFocus
+
+        if (travellerTypesPattern.test(this.fields.type)) {
+            this.context.save();
+            this.context.globalCompositeOperation = "luminosity";
+            if (this.isEachColorDark[0])
+                this.context.globalAlpha = 0.33;
+            this.context.drawImage(this.images[4], 524, 1197); //Traveller
+            this.context.restore();
+        }
+
+        this.context.textAlign = "center";
+        this.context.textBaseline = "middle";
+
+        if (this.fields.heirloom) {
+            this.context.drawImage(this.images[13], 97, 1720); //Heirloom banner
+            this.writeSingleLine(this.fields.heirloom, 701, 1799, 1040, 58, "Times New Roman");
+        }
+        if (this.isEachColorDark[1])
+            this.context.fillStyle = "white";
+        this.writeSingleLine(this.fields.title, 701, 215, this.fields.preview ? 800 : 1180, 75);
+        if (this.fields.type.split(" - ").length >= 4) {
+            let types2 = this.fields.type.split(" - ");
+            let types1 = types2.splice(0, Math.ceil(types2.length / 2));
+            let left = this.fields.price ? 750 + 65 * (numberPriceIcons - 1) : 701;
+            let right = this.fields.price ? 890 - 65 * (numberPriceIcons - 1) : 1180;
+            this.writeSingleLine(types1.join(" - ") + " -", left, 1922 - 26, right, 42);
+            this.writeSingleLine(types2.join(" - "), left, 1922 + 26, right, 42);
+        } else {
+            if (this.images[17].height > 0 && this.images[17].width > 0) {
+                let left = this.fields.price ? 730 + 65 * (numberPriceIcons - 1) : 701;
+                let right = this.fields.price ? 800 - 65 * (numberPriceIcons - 1) : 900;
+                this.writeSingleLine(this.fields.type, left, 1922, right, 64);
+            } else {
+                let left = this.fields.price ? 750 + 125 * (numberPriceIcons - 1) : 701;
+                let right = this.fields.price ? 890 - 85 * (numberPriceIcons - 1) : 1180;
+                this.writeSingleLine(this.fields.type, left, 1922, right, 64);
+            }
+        }
+        if (this.fields.price)
+            this.writeLineWithIcons(this.fields.price + " ", 153, 1940, 85 / 90, "Minion"); //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+        if (this.fields.preview) {
+            this.writeSingleLine(this.fields.preview + " ", 223, 210, 0, 0, "Minion");
+            this.writeSingleLine(this.fields.preview + " ", 1203, 210, 0, 0, "Minion");
+        }
+        this.context.fillStyle = (this.isEachColorDark[0]) ? "white" : "black";
+        if (!this.fields.heirloom)
+            this.writeDescription(this.fields.description, 701, 1500, 960, 660, 64);
+        else
+            this.writeDescription(this.fields.description, 701, 1450, 960, 560, 64);
+        this.writeIllustrationCredit(150, 2038, "white", "");
+        this.writeCreatorCredit(1253, 2038, "white", "");
+
+        this.drawExpansionIcon(1230, 1920, 80, 80);
+        this.context.restore();
+    }
+}
+
+class EventPainter extends Painter {
+
+    draw(){
+        this.context.save();
+        this.drawPicture(1075, 584, 1887, 730);
+        this.removeCorners(2151, 1403, 100);
+
+        this.context.drawImage(this.getRecoloredImage(6, 0), 0, 0); //EventColorOne
+        if (this.fields.heirloom)
+            this.context.drawImage(this.images[14], 146, 832); //EventHeirloom
+        if (this.fields.color2 !== COLOR_SAME) //two colors are different
+            this.context.drawImage(this.getRecoloredImage(7, 1), 0, 0); //EventColorTwo
+        this.context.drawImage(this.getRecoloredImage(8, 0, 6), 0, 0); //EventUncoloredDetails
+        this.context.drawImage(this.getRecoloredImage(15, 0, 9), 0, 0); //EventBar
+
+        this.context.textAlign = "center";
+        this.context.textBaseline = "middle";
+
+        if (this.fields.heirloom)
+            this.writeSingleLine(this.fields.heirloom, 1074, 900, 1600, 58, "Times New Roman");
+        if (this.isEachColorDark[0])
+            this.context.fillStyle = "white";
+        this.writeSingleLine(document.getElementById("title").value, 1075, 165, 780, 70);
+
+        if (this.fields.type) {
+            this.context.save();
+            this.context.translate(1903, 240);
+            this.context.rotate(45 * Math.PI / 180);
+            this.context.scale(1, 0.8); //yes, the letters are shorter
+            this.writeSingleLine(this.fields.type, 0, 0, 283, 64);
+            this.context.restore();
+        }
+
+        if (this.fields.price)
+            this.writeLineWithIcons(this.fields.price + " ", 130, 205, 85 / 90, "Minion");
+        //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
+
+        this.writeDescription(this.fields.description, 1075, 1107, 1600, 283, 70);
+        this.writeIllustrationCredit(181, 1272, "black", "bold ");
+        this.writeCreatorCredit(1969, 1272, "black", "bold ");
+
+        this.drawExpansionIcon(1930, 1190, 80, 80);
+        this.context.restore();
+    }
+}
+
 class DoubleCardPainter extends Painter {
 
     drawHalfCard(t, title, price, description, colorID) {
         this.context.textAlign = "center";
         this.context.textBaseline = "middle";
-        //context.font = "small-caps" + context.font;
-        //writeSingleLine(document.getElementById(l).value, 701, 215, 1180, 75);
 
         this.context.save();
 
@@ -417,10 +547,11 @@ class DoubleCardPainter extends Painter {
     }
 
     draw() {
+        this.context.save();
         this.drawPicture(704, 1075, 1150, 564);
         this.removeCorners(1403, 2151, 100);
 
-        const colorID = this.extra.colorID;
+        const colorID = this.fields.color2 === COLOR_SAME ? 0 : 1;
 
         this.context.drawImage(this.getRecoloredImage(9, 0), 0, 0); //DoubleColorOne
         if (!this.isEachColorDark[0])
@@ -446,11 +577,23 @@ class DoubleCardPainter extends Painter {
         this.writeCreatorCredit(1253, 2038, "white", "");
 
         this.drawExpansionIcon(1230, 1920, 80, 80);
+        this.context.restore();
     }
 }
 
 class BaseCardPainter extends Painter {
+
+    bigIconProps(word, scale){
+        return {
+            dy: 115 - 48 * scale,
+            dx: 0,
+            scale: word.includes('$') ? 3.2 : 2.4,
+            font: "bold 222pt Minion"
+        }
+    }
+
     draw() {
+        this.context.save();
         this.drawPicture(704, 1075, 1150, 1898);
         this.removeCorners(1403, 2151, 100);
 
@@ -502,12 +645,14 @@ class BaseCardPainter extends Painter {
         this.writeCreatorCredit(1225, 2045, "white", "");
 
         this.drawExpansionIcon(1230, 1945, 80, 80);
+        this.context.restore();
     }
 }
 
 
 class PileMarkerPainter extends Painter {
     draw(){
+        this.context.save();
         this.drawPicture(1075, 702, 1250, 870);
         this.removeCorners(2151, 1403, 100);
 
@@ -530,12 +675,14 @@ class PileMarkerPainter extends Painter {
         this.context.rotate(Math.PI * 3 / 2);
         this.writeSingleLine(this.fields.title, -700, 230, 500, 75);
         this.context.restore();
+        this.context.restore();
     }
 }
 
 class MatPainter extends Painter {
 
     draw(){
+        this.context.save();
         this.drawPicture(464, 342, 928, 684);
 
         this.context.drawImage(this.getRecoloredImage(25, 0, 6), 0, 0); //MatBannerTop
@@ -550,11 +697,11 @@ class MatPainter extends Painter {
         this.writeSingleLine(this.fields.title, 464, 96, 490, 55);
 
         this.writeDescription(this.fields.description, 464, 572, 740, 80, 44);
-        this.writeDescription(this.fields.description, 464, 572, 740, 80, 44);
 
         this.writeIllustrationCredit(15, 660, "white", "", 16);
         this.writeCreatorCredit(913, 660, "white", "", 16);
 
         this.drawExpansionIcon(888, 40, 40, 40);
+        this.context.restore();
     }
 }

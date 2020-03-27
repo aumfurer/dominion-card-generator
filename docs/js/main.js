@@ -17,26 +17,24 @@ Array.prototype.remove = function () {
 function initCardImageGenerator() {
 
     const normalColorFactorLists = [
-		["Action/Event", [1, 1, 1]],
-		["Treasure", [1.1, 0.95, 0.55]],
-		["Victory", [0.75, 0.9, 0.65]],
-		["Reaction", [0.65, 0.8, 1.05]],
-		["Duration", [1.2, 0.8, 0.4]],
-		["Reserve", [0.9, 0.75, 0.5]],
-		["Curse", [0.85, 0.6, 1.1]],
-		["Shelter", [1.05, 0.65, 0.5]],
-		["Ruins", [0.75, 0.6, 0.35]],
-		["Landmark", [0.45, 1.25, 0.85]],
-		["Night", [0.3, 0.4, 0.45]],
-		["Boon", [1.4, 1.35, 0.55, 0, 0, 0, 1.7, 1.25, 0.65, 1.95, 1.6, 0.4]],
-		["Hex", [0.75, 0.6, 2.1, 0, 0, 0, 0.8, 0.8, 0.8, 1.0, 0.75, 2.1]],
-		["State", [1.1, 1.3, 1.3, 0.6, 0.15, 0, 1.55, 1.15, 1.05, 1.4, 0.65, 0.45]],
-		["Artifact", [1.15, 1, 0.75, 0.3, 0.15, 0.05]],
-		["Project", [1.15, 0.95, 0.9, 0.4, 0.2, 0.15]],
-		["Way", [1, 1.15, 1.25, 0.25, 0.3, 0.35, 1.6, 1.6, 1.6, 1.3, 1.3, 1.3]]
-	];
-
-    const travellerTypesPattern = new RegExp(["Traveller", "Traveler", "Reisender", "Reisende"].join("|"));
+        ["Action/Event", [1, 1, 1]],
+        ["Treasure", [1.1, 0.95, 0.55]],
+        ["Victory", [0.75, 0.9, 0.65]],
+        ["Reaction", [0.65, 0.8, 1.05]],
+        ["Duration", [1.2, 0.8, 0.4]],
+        ["Reserve", [0.9, 0.75, 0.5]],
+        ["Curse", [0.85, 0.6, 1.1]],
+        ["Shelter", [1.05, 0.65, 0.5]],
+        ["Ruins", [0.75, 0.6, 0.35]],
+        ["Landmark", [0.45, 1.25, 0.85]],
+        ["Night", [0.3, 0.4, 0.45]],
+        ["Boon", [1.4, 1.35, 0.55, 0, 0, 0, 1.7, 1.25, 0.65, 1.95, 1.6, 0.4]],
+        ["Hex", [0.75, 0.6, 2.1, 0, 0, 0, 0.8, 0.8, 0.8, 1.0, 0.75, 2.1]],
+        ["State", [1.1, 1.3, 1.3, 0.6, 0.15, 0, 1.55, 1.15, 1.05, 1.4, 0.65, 0.45]],
+        ["Artifact", [1.15, 1, 0.75, 0.3, 0.15, 0.05]],
+        ["Project", [1.15, 0.95, 0.9, 0.4, 0.2, 0.15]],
+        ["Way", [1, 1.15, 1.25, 0.25, 0.3, 0.35, 1.6, 1.6, 1.6, 1.3, 1.3, 1.3]]
+    ];
 
     const normalColorCustomIndices = [0, 0];
     const normalColorDropdowns = document.getElementsByName("normalcolor");
@@ -68,9 +66,9 @@ function initCardImageGenerator() {
     let imagesLoaded = false;
 
     let recolorFactorList = [
-		[0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6],
-		[0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6]
-	];
+        [0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6],
+        [0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6]
+    ];
 
     const normalColorCurrentIndices = [0, 0];
     let recoloredImages = [];
@@ -125,7 +123,6 @@ function initCardImageGenerator() {
             return recoloredImages[imageID];
         }
 
-
         if (!imagesLoaded) {
             imagesLoaded = images.every(img => img.complete);
             if (!imagesLoaded) {
@@ -140,30 +137,7 @@ function initCardImageGenerator() {
         for (let c of canvases)
             c.getContext("2d").clearRect(0, 0, c.width, c.height);
 
-
-        var context;
-        if (templateSize === 0 || templateSize === 2 || templateSize === 3) {
-            context = canvases[0].getContext("2d");
-        } else if (templateSize === 1 || templateSize === 4) {
-            context = canvases[1].getContext("2d");
-        } else {
-            context = canvases[2].getContext("2d");
-        }
-
-        //context.save();
-
-        // draw
-
-        const picture = images[5];
-        const pictureX = document.getElementById("picture-x").value;
-        const pictureY = document.getElementById("picture-y").value;
-        const pictureZoom = document.getElementById("picture-zoom").value;
-        const expansion = images[17];
-        const typeLine = document.getElementById("type").value;
-        const heirloomLine = document.getElementById("type2").value;
-        const priceLine = document.getElementById("price").value;
-        const numberPriceIcons = (priceLine.match(new RegExp("[" + Object.keys(icons).join("") + "]", "g")) || []).length;
-        const previewLine = document.getElementById("preview").value;
+        const templateSizeCanvas = [0, 1, 0, 0, 1, 2];
 
         let isEachColorDark = [false, false];
 
@@ -179,179 +153,50 @@ function initCardImageGenerator() {
 
         const differentIntensities = isEachColorDark[0] !== isEachColorDark[1];
 
-        if (!(differentIntensities || parseInt(normalColorCurrentIndices[1]) === 0 || parseInt(normalColorCurrentIndices[0]) + 1 === parseInt(normalColorCurrentIndices[1]))) {
-            document.getElementById('color2splitselector').removeAttribute("style");
+        const splitSelector = document.getElementById('color2splitselector');
+        if (!(differentIntensities || normalColorCurrentIndices[1] === 0 || normalColorCurrentIndices[0] + 1 === normalColorCurrentIndices[1])) {
+            splitSelector.removeAttribute("style");
         } else {
-            document.getElementById('color2splitselector').setAttribute("style", "display:none");
+            splitSelector.setAttribute("style", "display:none");
         }
 
-        function actuallyDraw() {
+        const fields = {
+            creator: document.getElementById("creator").value,
+            credit: document.getElementById("credit").value,
+            description: document.getElementById("description").value,
+            description2: document.getElementById("description2").value,
+            title: document.getElementById("title").value,
+            title2: document.getElementById("title2").value,
+            heirloom: document.getElementById("type2").value,
+            type: document.getElementById("type").value,
+            price: document.getElementById("price").value,
+            preview: document.getElementById("preview").value,
+            color2split: document.getElementById("color2split").value,
+            color1: normalColorCurrentIndices[0],
+            color2: normalColorCurrentIndices[1] - 1,
+            pictureX: parseFloat(document.getElementById("picture-x").value),
+            pictureY: parseFloat(document.getElementById("picture-y").value),
+            pictureZoom: document.getElementById("picture-zoom").value
+        };
 
-            const descriptionStr = document.getElementById("description").value;
+        const painterTypes = [CardPainter, EventPainter, DoubleCardPainter, BaseCardPainter, PileMarkerPainter, MatPainter];
 
-            const fields = {
-                creator: document.getElementById("creator").value,
-                credit: document.getElementById("credit").value,
-                description: descriptionStr,
-                description2: document.getElementById("description2").value,
-                title: document.getElementById("title").value,
-                title2: document.getElementById("title2").value,
-                heirloom: document.getElementById("type2").value,
-                type: document.getElementById("type").value,
-                price: document.getElementById("price").value,
-                preview: document.getElementById("preview").value,
-            };
+        const painter = new painterTypes[templateSize](
+            canvases[templateSizeCanvas[templateSize]].getContext("2d"),
+            getExtraBoldWords(),
+            images,
+            numberFirstIcon,
+            fields,
+            isEachColorDark,
+            getRecoloredImage,
+        );
 
-            const pictureFields = {
-                image: picture,
-                x: parseFloat(pictureX),
-                y: parseFloat(pictureY),
-                zoom: pictureZoom
-            };
-
-
-            const painterTypes = [Painter, Painter, DoubleCardPainter, BaseCardPainter, PileMarkerPainter, MatPainter];
-
-            const painter = new painterTypes[templateSize](
-                context,
-                getExtraBoldWords(),
-                images,
-                numberFirstIcon,
-                pictureFields,
-                fields,
-                isEachColorDark,
-                getRecoloredImage,
-            );
-
-            if (templateSize === 0) { //card
-                painter.drawPicture(704, 706, 1150, 835);
-                painter.removeCorners(1403, 2151, 100);
-
-                context.drawImage(getRecoloredImage(0, 0), 0, 0); //CardColorOne
-                if (normalColorCurrentIndices[1] > 0) { //two colors are different
-                    let splitPosition = document.getElementById("color2split").value;
-                    context.drawImage(getRecoloredImage(!differentIntensities ? splitPosition : 12, 1), 0, 0); //CardColorTwo
-                }
-                context.drawImage(getRecoloredImage(2, 0, 6), 0, 0); //CardGray
-                context.drawImage(getRecoloredImage(16, 0, 9), 0, 0); //CardBrown
-                if (normalColorCurrentIndices[0] > 0 && !isEachColorDark[0] && normalColorCurrentIndices[1] === 0) //single (non-Action, non-Night) color
-                    context.drawImage(images[3], 44, 1094); //DescriptionFocus
-
-                if (travellerTypesPattern.test(typeLine)) {
-                    context.save();
-                    context.globalCompositeOperation = "luminosity";
-                    if (isEachColorDark[0])
-                        context.globalAlpha = 0.33;
-                    context.drawImage(images[4], 524, 1197); //Traveller
-                    context.restore();
-                }
-
-                context.textAlign = "center";
-                context.textBaseline = "middle";
-                //context.font = "small-caps" + context.font;
-                if (heirloomLine) {
-                    context.drawImage(images[13], 97, 1720); //Heirloom banner
-                    painter.writeSingleLine(heirloomLine, 701, 1799, 1040, 58, "Times New Roman");
-                }
-                if (isEachColorDark[1])
-                    context.fillStyle = "white";
-                painter.writeSingleLine(document.getElementById("title").value, 701, 215, previewLine ? 800 : 1180, 75);
-                if (typeLine.split(" - ").length >= 4) {
-                    let types2 = typeLine.split(" - ");
-                    let types1 = types2.splice(0, Math.ceil(types2.length / 2));
-                    let left = priceLine ? 750 + 65 * (numberPriceIcons - 1) : 701;
-                    let right = priceLine ? 890 - 65 * (numberPriceIcons - 1) : 1180;
-                    painter.writeSingleLine(types1.join(" - ") + " -", left, 1922 - 26, right, 42);
-                    painter.writeSingleLine(types2.join(" - "), left, 1922 + 26, right, 42);
-                } else {
-                    if (expansion.height > 0 && expansion.width > 0) {
-                        let left = priceLine ? 730 + 65 * (numberPriceIcons - 1) : 701;
-                        let right = priceLine ? 800 - 65 * (numberPriceIcons - 1) : 900;
-                        painter.writeSingleLine(typeLine, left, 1922, right, 64);
-                    } else {
-                        let left = priceLine ? 750 + 125 * (numberPriceIcons - 1) : 701;
-                        let right = priceLine ? 890 - 85 * (numberPriceIcons - 1) : 1180;
-                        painter.writeSingleLine(typeLine, left, 1922, right, 64);
-                    }
-                }
-                if (priceLine)
-                    painter.writeLineWithIcons(priceLine + " ", 153, 1940, 85 / 90, "Minion"); //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
-                if (previewLine) {
-                    painter.writeSingleLine(previewLine + " ", 223, 210, 0, 0, "Minion");
-                    painter.writeSingleLine(previewLine + " ", 1203, 210, 0, 0, "Minion");
-                }
-                context.fillStyle = (isEachColorDark[0]) ? "white" : "black";
-                if (!heirloomLine)
-                    painter.writeDescription(descriptionStr, 701, 1500, 960, 660, 64);
-                else
-                    painter.writeDescription(descriptionStr, 701, 1450, 960, 560, 64);
-                painter.writeIllustrationCredit(150, 2038, "white", "");
-                painter.writeCreatorCredit(1253, 2038, "white", "");
-
-                painter.drawExpansionIcon(1230, 1920, 80, 80);
-
-            } else if (templateSize === 1) { //event/landscape
-                painter.drawPicture(1075, 584, 1887, 730);
-                painter.removeCorners(2151, 1403, 100);
-
-                context.drawImage(getRecoloredImage(6, 0), 0, 0); //EventColorOne
-                if (heirloomLine)
-                    context.drawImage(images[14], 146, 832); //EventHeirloom
-                if (normalColorCurrentIndices[1] > 0) //two colors are different
-                    context.drawImage(getRecoloredImage(7, 1), 0, 0); //EventColorTwo
-                context.drawImage(getRecoloredImage(8, 0, 6), 0, 0); //EventUncoloredDetails
-                context.drawImage(getRecoloredImage(15, 0, 9), 0, 0); //EventBar
-
-                //no Traveller
-
-                context.textAlign = "center";
-                context.textBaseline = "middle";
-                //context.font = "small-caps" + context.font;
-                if (heirloomLine)
-                    painter.writeSingleLine(heirloomLine, 1074, 900, 1600, 58, "Times New Roman");
-                if (isEachColorDark[0])
-                    context.fillStyle = "white";
-                painter.writeSingleLine(document.getElementById("title").value, 1075, 165, 780, 70);
-
-                if (typeLine) {
-                    context.save();
-                    context.translate(1903, 240);
-                    context.rotate(45 * Math.PI / 180);
-                    context.scale(1, 0.8); //yes, the letters are shorter
-                    painter.writeSingleLine(typeLine, 0, 0, 283, 64);
-                    context.restore();
-                }
-
-                if (priceLine)
-                    painter.writeLineWithIcons(priceLine + " ", 130, 205, 85 / 90, "Minion");
-                    //adding a space confuses writeLineWithIconsReplacedWithSpaces into thinking this isn't a line that needs resizing
-
-                painter.writeDescription(descriptionStr, 1075, 1107, 1600, 283, 70);
-                painter.writeIllustrationCredit(181, 1272, "black", "bold ");
-                painter.writeCreatorCredit(1969, 1272, "black", "bold ");
-
-                painter.drawExpansionIcon(1930, 1190, 80, 80);
-
-            } else if (templateSize === 2) { //double card
-                if (!recoloredImages[9])
-                    recoloredImages[10] = false;
-                painter.extra.recolorFactors = [false, false];
-                painter.extra.colorID = (normalColorCurrentIndices[1] > 0) ? 1 : 0;
-                painter.draw();
-            } else if (templateSize === 3) { //base card
-                painter.draw();
-            } else if (templateSize === 4) { //pile marker
-                painter.draw();
-            } else if (templateSize === 5) { //player mat
-                painter.draw();
-            }
+        if (templateSize === 2) { //double card
+            if (!recoloredImages[9])
+                recoloredImages[10] = false;
+            painter.extra.recolorFactors = [false, false];
         }
-
-        context.save();
-        actuallyDraw();
-        context.restore();
-        //finish up
-        //context.restore();
+        painter.draw();
 
         updateURL();
 
@@ -360,7 +205,8 @@ function initCardImageGenerator() {
     }
 
     let nextDrawInstruction = 0;
-    function queueDraw(time=1500) {
+
+    function queueDraw(time = 1500) {
         if (nextDrawInstruction)
             window.clearTimeout(nextDrawInstruction);
         nextDrawInstruction = window.setTimeout(draw, time);
@@ -370,7 +216,7 @@ function initCardImageGenerator() {
         var arguments = "?";
         for (var i = 0; i < simpleOnChangeInputFieldIDs.length; ++i) {
             arguments += simpleOnChangeInputFieldIDs[i] + "=" + encodeURIComponent(document.getElementById(simpleOnChangeInputFieldIDs[i]).value) + "&";
-            if (templateSize == 2 && i < simpleOnChangeButOnlyForSize2InputFieldIDs.length)
+            if (templateSize === 2 && i < simpleOnChangeButOnlyForSize2InputFieldIDs.length)
                 arguments += simpleOnChangeButOnlyForSize2InputFieldIDs[i] + "=" + encodeURIComponent(document.getElementById(simpleOnChangeButOnlyForSize2InputFieldIDs[i]).value) + "&";
         }
         arguments += "picture=" + encodeURIComponent(document.getElementById("picture").value) + "&";
@@ -430,35 +276,35 @@ function initCardImageGenerator() {
 
     // initialize stage
     var sources = [
-		"CardColorOne.png",
-		"CardColorTwo.png",
-		"CardGray.png",
-		"DescriptionFocus.png",
-		"Traveller.png",
-		"", //illustration //5
-		"EventColorOne.png",
-		"EventColorTwo.png",
-		"EventBrown.png",
-		"DoubleColorOne.png",
-		"DoubleColorOne.png", //10
-		"DoubleUncoloredDetails.png",
-		"CardColorTwoNight.png",
-		"Heirloom.png",
-		"EventHeirloom.png",
-		"EventBrown2.png", //15
-		"CardBrown.png",
+        "CardColorOne.png",
+        "CardColorTwo.png",
+        "CardGray.png",
+        "DescriptionFocus.png",
+        "Traveller.png",
+        "", //illustration //5
+        "EventColorOne.png",
+        "EventColorTwo.png",
+        "EventBrown.png",
+        "DoubleColorOne.png",
+        "DoubleColorOne.png", //10
+        "DoubleUncoloredDetails.png",
+        "CardColorTwoNight.png",
+        "Heirloom.png",
+        "EventHeirloom.png",
+        "EventBrown2.png", //15
+        "CardBrown.png",
         "", //expansion
-		"CardColorTwoSmall.png",
-		"CardColorTwoBig.png",
-		"BaseCardColorOne.png", //20
-		"BaseCardGray.png",
-		"BaseCardBrown.png",
-		"PileMarkerColorOne.png",
-		"PileMarkerGrey.png",
+        "CardColorTwoSmall.png",
+        "CardColorTwoBig.png",
+        "BaseCardColorOne.png", //20
+        "BaseCardGray.png",
+        "BaseCardBrown.png",
+        "PileMarkerColorOne.png",
+        "PileMarkerGrey.png",
         "MatBannerTop.png",
         "MatBannerBottom.png"
-		//icons come afterwards
-	];
+        //icons come afterwards
+    ];
     for (let source of sources)
         recoloredImages.push(false);
 
@@ -473,8 +319,10 @@ function initCardImageGenerator() {
         span.textContent = key.replace("\\", "");
         li.insertBefore(span, li.firstChild);
         legend.insertBefore(li, legend.firstChild);
-        sources.push(icons[key][0] + ".png");
     }
+
+    for (let key in icons)
+        sources.push(icons[key][0] + ".png");
 
     for (let i = 0; i < sources.length; i++) {
         images.push(new Image());
@@ -541,6 +389,7 @@ function initCardImageGenerator() {
             setImageSource(url);
         }
     }
+
     document.getElementById("picture").onchange = function () {
         onChangeExternalImage(5, this.value);
     };
@@ -556,14 +405,13 @@ function initCardImageGenerator() {
     };
 
     const genericCustomAccentColors = [
-		[0, 0, 0, 0, 0, 0, 1, 1, 1, 1.2, 0.8, 0.5],
-		[0, 0, 0, 0, 0, 0, 0.9, 0.8, 0.7, 0.9, 0.8, 0.7]
-	];
+        [0, 0, 0, 0, 0, 0, 1, 1, 1, 1.2, 0.8, 0.5],
+        [0, 0, 0, 0, 0, 0, 0.9, 0.8, 0.7, 0.9, 0.8, 0.7]
+    ];
     for (let i = 0; i < normalColorDropdowns.length; ++i)
         normalColorDropdowns[i].onchange = function (i) {
             return function () {
                 if (normalColorCurrentIndices[i] >= 10 || this.selectedIndex >= 10) { //potentially recoloring the supposedly Uncolored images
-                    recoloredImages[2] = false;
                     recoloredImages[8] = false;
                     recoloredImages[11] = false;
                     recoloredImages[15] = false;
@@ -648,7 +496,7 @@ function initCardImageGenerator() {
         }
         for (const id of simpleOnChangeButOnlyForSize2InputFieldIDs)
             if (!document.getElementById(id).value)
-                document.getElementById(id).value = document.getElementById(id.slice(0, - 1)).value;
+                document.getElementById(id).value = document.getElementById(id.slice(0, -1)).value;
     }
     //set the illustration's Source properly and also call queueDraw.
     document.getElementById("picture").onchange();
