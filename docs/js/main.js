@@ -37,57 +37,63 @@ function initCardImageGenerator() {
         ["Way", [1, 1.15, 1.25, 0.25, 0.3, 0.35, 1.6, 1.6, 1.6, 1.3, 1.3, 1.3]]
     ];
 
-    const normalColorCustomIndices = [0, 0];
-    const normalColorDropdowns = document.getElementsByName("normalcolor");
+    const colorDropdowns = /** @type {NodeListOf<HTMLSelectElement>} */ document.getElementsByName("normalcolor");
 
-    for (let j = 0; j < normalColorDropdowns.length; ++j) {
-        for (let i = 0; i < normalColorFactorLists.length; ++i) { //"- j" because only the first dropdown should have Night
+    for (let dropdown of colorDropdowns) {
+        for (let color of normalColorFactorLists){
             const option = document.createElement("option");
-            option.textContent = normalColorFactorLists[i][0];
-            normalColorDropdowns[j].appendChild(option);
+            option.textContent = color[0];
+            dropdown.appendChild(option);
         }
-        normalColorCustomIndices[j] = normalColorDropdowns[j].childElementCount;
-        var customOption = document.createElement("option");
-        customOption.textContent = "CUSTOM";
-        normalColorDropdowns[j].appendChild(customOption);
-        customOption = document.createElement("option");
-        customOption.textContent = "EXTRA CUSTOM";
-        normalColorDropdowns[j].appendChild(customOption);
-        normalColorDropdowns[j].selectedIndex = 0;
+        for (let text of ["CUSTOM", "EXTRA CUSTOM"]) {
+            const customOption = document.createElement("option");
+            customOption.textContent = text;
+            dropdown.appendChild(customOption);
+        }
+        dropdown.selectedIndex = 0;
+        dropdown.oldIndex = -1;
     }
+
+    const customColorIndex = [normalColorFactorLists.length, normalColorFactorLists.length+1];
 
     const canvases = document.getElementsByClassName("myCanvas");
     let images = [];
     let imagesLoaded = false;
 
-    const normalColorCurrentIndices = [0, 0];
+    // const currentColorIndex = [0, 0];
 
     let recolorFactorList = [
         [0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6],
         [0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6]
     ];
 
+    let recoloredImages = [];
     let isEachColorDark = [false, false];
 
     function isColorDark(i) {
-        const color = (normalColorCurrentIndices[i] >= normalColorCustomIndices[i]) ?
+        const color = (colorDropdowns[i].selectedIndex >= customColorIndex[i]) ?
             recolorFactorList[i] :
-            normalColorFactorLists[normalColorCurrentIndices[i] - i][1];
+            normalColorFactorLists[colorDropdowns[i].selectedIndex - i][1];
         return color.slice(0, 3).reduce((total, num) => total + parseFloat(num)) <= 1.5;
     }
 
-    let recoloredImages = [];
 
-    // Depends on normalColorCurrentIndices, normalColorCustomIndices, recolorFactorList, normalColorFactorLists
     function updateIsEachColorDark() {
         isEachColorDark[0] = isColorDark(0);
-        isEachColorDark[1] = normalColorCurrentIndices[1] === 0 ? isEachColorDark[0] : isColorDark(1);
+        isEachColorDark[1] = colorDropdowns[1].selectedIndex === 0 ? isEachColorDark[0] : isColorDark(1);
 
         const splitSelector = document.getElementById('color2splitselector');
-        if (isEachColorDark[0] !== isEachColorDark[1] || normalColorCurrentIndices[1] === 0 || normalColorCurrentIndices[0] + 1 === normalColorCurrentIndices[1]) {
-            splitSelector.setAttribute("style", "display:none");
-        } else {
+
+        const showSelector = (
+            isEachColorDark[0] === isEachColorDark[1] &&
+            colorDropdowns[1].selectedIndex !== 0 &&
+            colorDropdowns[0].selectedIndex + 1 !== colorDropdowns[1].selectedIndex
+        );
+
+        if (showSelector) {
             splitSelector.removeAttribute("style");
+        } else {
+            splitSelector.setAttribute("style", "display:none");
         }
     }
 
@@ -108,12 +114,12 @@ function initCardImageGenerator() {
 
                 offset = offset || 0;
                 var recolorFactors;
-                if (normalColorCurrentIndices[colorID] === normalColorCustomIndices[colorID])
+                if (colorDropdowns[colorID].selectedIndex === customColorIndex[colorID])
                     recolorFactors = recolorFactorList[colorID].slice(0, 3);
-                else if (normalColorCurrentIndices[colorID] > normalColorCustomIndices[colorID])
+                else if (colorDropdowns[colorID].selectedIndex > customColorIndex[colorID])
                     recolorFactors = recolorFactorList[colorID];
                 else
-                    recolorFactors = normalColorFactorLists[normalColorCurrentIndices[colorID] - colorID][1];
+                    recolorFactors = normalColorFactorLists[colorDropdowns[colorID].selectedIndex - colorID][1];
                 recolorFactors = recolorFactors.slice();
 
                 while (recolorFactors.length < 6)
@@ -169,8 +175,8 @@ function initCardImageGenerator() {
             price: document.getElementById("price").value,
             preview: document.getElementById("preview").value,
             color2split: document.getElementById("color2split").value,
-            color1: normalColorCurrentIndices[0],
-            color2: normalColorCurrentIndices[1] - 1,
+            color1: colorDropdowns[0].selectedIndex, // currentColorIndex[0],
+            color2: colorDropdowns[1].selectedIndex - 1,
             pictureX: parseFloat(document.getElementById("picture-x").value),
             pictureY: parseFloat(document.getElementById("picture-y").value),
             pictureZoom: document.getElementById("picture-zoom").value,
@@ -214,8 +220,8 @@ function initCardImageGenerator() {
         arguments += "picture=" + encodeURIComponent(document.getElementById("picture").value) + "&";
         arguments += "expansion=" + encodeURIComponent(document.getElementById("expansion").value) + "&";
         arguments += "custom-icon=" + encodeURIComponent(document.getElementById("custom-icon").value);
-        for (let i = 0; i < normalColorDropdowns.length; ++i) {
-            switch (normalColorCustomIndices[i] - normalColorDropdowns[i].selectedIndex) {
+        for (let i = 0; i < colorDropdowns.length; ++i) {
+            switch (customColorIndex[i] - colorDropdowns[i].selectedIndex) {
                 case 0: //custom
                     for (let ch = 0; ch < 3; ++ch)
                         arguments += "&c" + i + "." + ch + "=" + recolorInputs[i * 12 + ch].value;
@@ -229,7 +235,7 @@ function initCardImageGenerator() {
                     }
                     break;
                 default: //preconfigured
-                    arguments += "&color" + i + "=" + normalColorDropdowns[i].selectedIndex;
+                    arguments += "&color" + i + "=" + colorDropdowns[i].selectedIndex;
                     break;
             }
         }
@@ -301,8 +307,6 @@ function initCardImageGenerator() {
         recoloredImages.push(false);
 
     const legend = document.getElementById("legend");
-    const numberFirstIcon = sources.length;
-
     for (let key in icons) {
         const li = document.createElement("li");
         li.textContent = ": " + icons[key][0];
@@ -343,13 +347,12 @@ function initCardImageGenerator() {
                 const val = parseFloat(this.value);
                 if (val === val) {
                     const imageID = Math.floor(i / 12);
-                    if (normalColorCurrentIndices[imageID] >= 10) { //potentially recoloring the supposedly Uncolored images
-                        recoloredImages[2] = false;
-                        recoloredImages[8] = false;
-                        recoloredImages[11] = false;
-                        recoloredImages[15] = false;
-                        recoloredImages[16] = false;
-                    }
+                    recoloredImages[2] = false;
+                    recoloredImages[8] = false;
+                    recoloredImages[11] = false;
+                    recoloredImages[15] = false;
+                    recoloredImages[16] = false;
+
                     recoloredImages[imageID] = false;
                     recoloredImages[imageID + 6] = false;
                     recoloredImages[imageID + 9] = false;
@@ -361,6 +364,7 @@ function initCardImageGenerator() {
                     recoloredImages[20] = false;
                     recoloredImages[23] = false;
                     recolorFactorList[imageID][i % 12] = val;
+                    updateIsEachColorDark();
                     queueDraw();
                 }
             }
@@ -405,13 +409,12 @@ function initCardImageGenerator() {
 
     function normalColorDropDownChanges(colorID, event) {
         const dropdown = event.currentTarget;
-        if (normalColorCurrentIndices[colorID] >= 10 || dropdown.selectedIndex >= 10) { //potentially recoloring the supposedly Uncolored images
+        if (dropdown.oldIndex >= 10 || dropdown.selectedIndex >= 10) { //potentially recoloring the supposedly Uncolored images
             recoloredImages[8] = false;
             recoloredImages[11] = false;
             recoloredImages[15] = false;
             recoloredImages[16] = false;
         }
-        normalColorCurrentIndices[colorID] = dropdown.selectedIndex;
         recoloredImages[colorID] = false;
         recoloredImages[colorID + 6] = false;
         recoloredImages[colorID + 9] = false;
@@ -427,7 +430,7 @@ function initCardImageGenerator() {
         const customColorFields = dropdown.nextElementSibling;
         const extraCustomColorFields = customColorFields.nextElementSibling;
 
-        const delta = normalColorCustomIndices[colorID] - dropdown.selectedIndex;
+        const delta = customColorIndex[colorID] - dropdown.selectedIndex;
 
         if (delta <= 0)
             customColorFields.removeAttribute("style");
@@ -447,15 +450,15 @@ function initCardImageGenerator() {
 
         updateIsEachColorDark();
         queueDraw(1);
-        console.log({colorID})
+        dropdown.oldIndex = dropdown.selectedIndex;
     }
 
-    normalColorDropdowns[0].onchange = (event) => normalColorDropDownChanges(0, event);
-    normalColorDropdowns[1].onchange = (event) => normalColorDropDownChanges(1, event);
+    colorDropdowns[0].onchange = (event) => normalColorDropDownChanges(0, event);
+    colorDropdowns[1].onchange = (event) => normalColorDropDownChanges(1, event);
 
     const templateSizeInputs = document.getElementsByName("size");
     for (const template of templateSizeInputs)
-        template.onchange = function (e) {
+        template.onchange = function () {
             templateSize = parseInt(this.value);
             document.body.className = this.id;
             document.getElementById("load-indicator").removeAttribute("style");
@@ -463,15 +466,15 @@ function initCardImageGenerator() {
         };
 
     //ready to begin: load information from query parameters
-    var query = getQueryParams(document.location.search);
+    const query = getQueryParams(document.location.search);
     for (const key in query) {
         const value = query[key];
         switch (key) {
             case "color0":
-                normalColorCurrentIndices[0] = normalColorDropdowns[0].selectedIndex = parseInt(value);
+                colorDropdowns[0].selectedIndex = parseInt(value);
                 break;
             case "color1":
-                normalColorCurrentIndices[1] = normalColorDropdowns[1].selectedIndex = parseInt(value);
+                colorDropdowns[1].selectedIndex = parseInt(value);
                 break;
             case "size":
                 const buttonElement = document.getElementsByName("size")[templateSize = parseInt(value)];
@@ -482,17 +485,17 @@ function initCardImageGenerator() {
                 let matches = key.match(/^c(\d)\.(\d)$/);
                 if (matches) {
                     const id = matches[1];
-                    normalColorCurrentIndices[id] = normalColorDropdowns[id].selectedIndex = normalColorCustomIndices[id];
-                    normalColorDropdowns[id].nextElementSibling.removeAttribute("style");
+                    colorDropdowns[id].selectedIndex = customColorIndex[id];
+                    colorDropdowns[id].nextElementSibling.removeAttribute("style");
                     recolorFactorList[id][matches[2]] = recolorInputs[12 * id + parseInt(matches[2])].value = parseFloat(value);
                 } else {
                     matches = key.match(/^c(\d)\.(\d)\.(\d)$/);
                     if (matches) {
                         alreadyNeededToDetermineCustomAccentColors = true;
                         const id = matches[1];
-                        normalColorCurrentIndices[id] = normalColorDropdowns[id].selectedIndex = normalColorCustomIndices[id] + 1;
-                        normalColorDropdowns[id].nextElementSibling.removeAttribute("style");
-                        normalColorDropdowns[id].nextElementSibling.nextElementSibling.removeAttribute("style");
+                        colorDropdowns[id].selectedIndex = customColorIndex[id] + 1;
+                        colorDropdowns[id].nextElementSibling.removeAttribute("style");
+                        colorDropdowns[id].nextElementSibling.nextElementSibling.removeAttribute("style");
                         recolorFactorList[id][parseInt(matches[2]) * 3 + parseInt(matches[3])] = recolorInputs[12 * id + 3 * parseInt(matches[2]) + parseInt(matches[3])].value = parseFloat(value);
                     } else {
                         const el = document.getElementById(key);
