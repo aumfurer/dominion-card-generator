@@ -403,13 +403,19 @@ class CardPainter extends Painter {
         this.drawPicture(704, 706, 1150, 835);
         this.removeCorners(1403, 2151, 100);
 
+        this.context.save();
+        this.context.filter = 'url(#matrix-color-0)';
         this.context.drawImage(this.getRecoloredImage(0, 0), 0, 0); //CardColorOne
+        this.context.restore();
 
         if (this.fields.color2 !== COLOR_SAME) {
             let splitPosition = this.fields.color2split;
             let sameIntensities = this.isEachColorDark[0] === this.isEachColorDark[1];
             const colorID = sameIntensities ? splitPosition : 12;
+            this.context.save();
+            this.context.filter = 'url(#matrix-color-1)';
             this.context.drawImage(this.getRecoloredImage(colorID, 1), 0, 0); //CardColorTwo
+            this.context.restore();
         }
         this.context.drawImage(this.getRecoloredImage(2, 0, 6), 0, 0); //CardGray
         this.context.drawImage(this.getRecoloredImage(16, 0, 9), 0, 0); //CardBrown
