@@ -101,7 +101,7 @@ function initCardImageGenerator() {
 
         function setMatrix(colorID) {
             // recolorFactors[ch + 3] * 255 + rgba[px + ch] * recolorFactors[ch])
-            const [r, g, b] = normalColorFactorLists[colorDropdowns[colorID].selectedIndex][1]
+            const [r, g, b] = normalColorFactorLists[colorDropdowns[colorID].selectedIndex - colorID][1]
             document.getElementById("filter"+colorID).innerHTML =
                 `<filter id="matrix-color-${colorID}">
                     <feColorMatrix 
