@@ -40,7 +40,7 @@ function initCardImageGenerator() {
     const colorDropdowns = /** @type {NodeListOf<HTMLSelectElement>} */ document.getElementsByName("normalcolor");
 
     for (let dropdown of colorDropdowns) {
-        for (let color of normalColorFactorLists){
+        for (let color of normalColorFactorLists) {
             const option = document.createElement("option");
             option.textContent = color[0];
             dropdown.appendChild(option);
@@ -51,10 +51,9 @@ function initCardImageGenerator() {
             dropdown.appendChild(customOption);
         }
         dropdown.selectedIndex = 0;
-        dropdown.oldIndex = -1;
     }
 
-    const customColorIndex = [normalColorFactorLists.length, normalColorFactorLists.length+1];
+    const customColorIndex = [normalColorFactorLists.length, normalColorFactorLists.length + 1];
 
     const canvases = document.getElementsByClassName("myCanvas");
     let images = [];
@@ -99,8 +98,44 @@ function initCardImageGenerator() {
 
     function draw() {
 
-        function getRecoloredImage(imageID, colorID, offset) {
-            if (!recoloredImages[imageID]) { //http://stackoverflow.com/questions/1445862/possible-to-use-html-images-like-canvas-with-getimagedata-putimagedata
+        function getRecolorFactors(colorID, offset) {
+            var recolorFactors;
+            if (colorDropdowns[colorID].selectedIndex === customColorIndex[colorID])
+                recolorFactors = recolorFactorList[colorID].slice(0, 3);
+            else if (colorDropdowns[colorID].selectedIndex > customColorIndex[colorID])
+                recolorFactors = recolorFactorList[colorID];
+            else
+                recolorFactors = normalColorFactorLists[colorDropdowns[colorID].selectedIndex - colorID][1];
+            recolorFactors = recolorFactors.slice();
+
+            while (recolorFactors.length < 6)
+                recolorFactors.push(0);
+
+            if (offset == 0) {
+                for (var ch = 0; ch < 3; ++ch)
+                    recolorFactors[ch] -= recolorFactors[ch + 3];
+            } else {
+                while (recolorFactors.length < 12)
+                    recolorFactors.push(genericCustomAccentColors[templateSize & 1][recolorFactors.length]);
+            }
+            return recolorFactors;
+
+        }
+
+        const cachedImg = {};
+        
+        function isCached(imageId, recolor) {
+            const cacheRecolor = cachedImg[imageId];
+            return cacheRecolor !== undefined &&
+                recolor.length === cacheRecolor.length &&
+                recolor.every((c, i) => c === cacheRecolor[i]);
+        }
+
+        function getRecoloredImage(imageID, colorID, offset=0) {
+            const recolorFactors = getRecolorFactors(colorID, offset);
+            if (!isCached(imageID, recolorFactors)) {
+            // if (!recoloredImages[imageID]) {
+                //http://stackoverflow.com/questions/1445862/possible-to-use-html-images-like-canvas-with-getimagedata-putimagedata
                 var cnvs = document.createElement("canvas");
                 var w = images[imageID].width,
                     h = images[imageID].height;
@@ -112,37 +147,21 @@ function initCardImageGenerator() {
                 var imgdata = ctx.getImageData(0, 0, w, h);
                 var rgba = imgdata.data;
 
-                offset = offset || 0;
-                var recolorFactors;
-                if (colorDropdowns[colorID].selectedIndex === customColorIndex[colorID])
-                    recolorFactors = recolorFactorList[colorID].slice(0, 3);
-                else if (colorDropdowns[colorID].selectedIndex > customColorIndex[colorID])
-                    recolorFactors = recolorFactorList[colorID];
-                else
-                    recolorFactors = normalColorFactorLists[colorDropdowns[colorID].selectedIndex - colorID][1];
-                recolorFactors = recolorFactors.slice();
-
-                while (recolorFactors.length < 6)
-                    recolorFactors.push(0);
-
-                if (offset === 0) {
-                    for (let ch = 0; ch < 3; ++ch)
-                        recolorFactors[ch] -= recolorFactors[ch + 3];
-                    for (let px = 0, ct = w * h * 4; px < ct; px += 4)
+                if (offset == 0) {
+                    for (var px = 0, ct = w * h * 4; px < ct; px += 4)
                         if (rgba[px + 3]) //no need to recolor pixels that are fully transparent
-                            for (let ch = 0; ch < 3; ++ch)
+                            for (var ch = 0; ch < 3; ++ch)
                                 rgba[px + ch] = Math.max(0, Math.min(255, Math.round(recolorFactors[ch + 3] * 255 + rgba[px + ch] * recolorFactors[ch])));
                 } else {
-                    while (recolorFactors.length < 12)
-                        recolorFactors.push(genericCustomAccentColors[templateSize & 1][recolorFactors.length]);
-                    for (let px = 0, ct = w * h * 4; px < ct; px += 4)
+                    for (var px = 0, ct = w * h * 4; px < ct; px += 4)
                         if (rgba[px + 3])
-                            for (let ch = 0; ch < 3; ++ch)
+                            for (var ch = 0; ch < 3; ++ch)
                                 rgba[px + ch] = Math.max(0, Math.min(255, rgba[px + ch] * recolorFactors[ch + offset]));
                 }
 
                 ctx.putImageData(imgdata, 0, 0);
                 recoloredImages[imageID] = cnvs;
+                cachedImg[imageID] = recolorFactors;
             }
             return recoloredImages[imageID];
         }
@@ -347,22 +366,6 @@ function initCardImageGenerator() {
                 const val = parseFloat(this.value);
                 if (val === val) {
                     const imageID = Math.floor(i / 12);
-                    recoloredImages[2] = false;
-                    recoloredImages[8] = false;
-                    recoloredImages[11] = false;
-                    recoloredImages[15] = false;
-                    recoloredImages[16] = false;
-
-                    recoloredImages[imageID] = false;
-                    recoloredImages[imageID + 6] = false;
-                    recoloredImages[imageID + 9] = false;
-                    if (imageID === 0)
-                        recoloredImages[10] = false;
-                    recoloredImages[12] = false;
-                    recoloredImages[18] = false;
-                    recoloredImages[19] = false;
-                    recoloredImages[20] = false;
-                    recoloredImages[23] = false;
                     recolorFactorList[imageID][i % 12] = val;
                     updateIsEachColorDark();
                     queueDraw();
@@ -409,24 +412,6 @@ function initCardImageGenerator() {
 
     function normalColorDropDownChanges(colorID, event) {
         const dropdown = event.currentTarget;
-        if (dropdown.oldIndex >= 10 || dropdown.selectedIndex >= 10) { //potentially recoloring the supposedly Uncolored images
-            recoloredImages[8] = false;
-            recoloredImages[11] = false;
-            recoloredImages[15] = false;
-            recoloredImages[16] = false;
-        }
-        recoloredImages[colorID] = false;
-        recoloredImages[colorID + 6] = false;
-        recoloredImages[colorID + 9] = false;
-        if (colorID === 0)
-            recoloredImages[10] = false;
-        recoloredImages[2] = false;
-        recoloredImages[12] = false;
-        recoloredImages[18] = false;
-        recoloredImages[19] = false;
-        recoloredImages[20] = false;
-        recoloredImages[23] = false;
-
         const customColorFields = dropdown.nextElementSibling;
         const extraCustomColorFields = customColorFields.nextElementSibling;
 
@@ -450,7 +435,6 @@ function initCardImageGenerator() {
 
         updateIsEachColorDark();
         queueDraw(1);
-        dropdown.oldIndex = dropdown.selectedIndex;
     }
 
     colorDropdowns[0].onchange = (event) => normalColorDropDownChanges(0, event);
