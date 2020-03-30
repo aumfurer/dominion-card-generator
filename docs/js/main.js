@@ -39,19 +39,23 @@ function initCardImageGenerator() {
 
     const colorDropdowns = /** @type {NodeListOf<HTMLSelectElement>} */ document.getElementsByName("normalcolor");
 
-    for (let dropdown of colorDropdowns) {
-        for (let color of normalColorFactorLists) {
-            const option = document.createElement("option");
-            option.textContent = color[0];
-            dropdown.appendChild(option);
+    function loadColorDropdowns() {
+        for (let dropdown of colorDropdowns) {
+            for (let color of normalColorFactorLists) {
+                const option = document.createElement("option");
+                option.textContent = color[0];
+                dropdown.appendChild(option);
+            }
+            for (let text of ["CUSTOM", "EXTRA CUSTOM"]) {
+                const customOption = document.createElement("option");
+                customOption.textContent = text;
+                dropdown.appendChild(customOption);
+            }
+            dropdown.selectedIndex = 0;
         }
-        for (let text of ["CUSTOM", "EXTRA CUSTOM"]) {
-            const customOption = document.createElement("option");
-            customOption.textContent = text;
-            dropdown.appendChild(customOption);
-        }
-        dropdown.selectedIndex = 0;
     }
+
+    loadColorDropdowns();
 
     const customColorIndex = [normalColorFactorLists.length, normalColorFactorLists.length + 1];
 
@@ -66,7 +70,7 @@ function initCardImageGenerator() {
         [0.75, 1.1, 1.35, 0, 0, 0, 1, 2, 3, 4, 5, 6]
     ];
 
-    let recoloredImages = [];
+    // let recoloredImages = [];
     let isEachColorDark = [false, false];
 
     function isColorDark(i) {
@@ -99,7 +103,7 @@ function initCardImageGenerator() {
     function draw() {
 
         function getRecolorFactors(colorID, offset) {
-            var recolorFactors;
+            let recolorFactors;
             if (colorDropdowns[colorID].selectedIndex === customColorIndex[colorID])
                 recolorFactors = recolorFactorList[colorID].slice(0, 3);
             else if (colorDropdowns[colorID].selectedIndex > customColorIndex[colorID])
@@ -111,8 +115,8 @@ function initCardImageGenerator() {
             while (recolorFactors.length < 6)
                 recolorFactors.push(0);
 
-            if (offset == 0) {
-                for (var ch = 0; ch < 3; ++ch)
+            if (offset === 0) {
+                for (let ch = 0; ch < 3; ++ch)
                     recolorFactors[ch] -= recolorFactors[ch + 3];
             } else {
                 while (recolorFactors.length < 12)
@@ -123,7 +127,7 @@ function initCardImageGenerator() {
         }
 
         const cachedImg = {};
-        
+
         function isCached(imageId, recolor) {
             const cacheRecolor = cachedImg[imageId];
             return cacheRecolor !== undefined &&
@@ -134,28 +138,25 @@ function initCardImageGenerator() {
         function getRecoloredImage(imageID, colorID, offset=0) {
             const recolorFactors = getRecolorFactors(colorID, offset);
             if (!isCached(imageID, recolorFactors)) {
-            // if (!recoloredImages[imageID]) {
                 //http://stackoverflow.com/questions/1445862/possible-to-use-html-images-like-canvas-with-getimagedata-putimagedata
-                var cnvs = document.createElement("canvas");
-                var w = images[imageID].width,
-                    h = images[imageID].height;
-                cnvs.width = w;
-                cnvs.height = h;
-                var ctx = cnvs.getContext("2d");
+                const cnvs = document.createElement("canvas");
+                const w = cnvs.width = images[imageID].width;
+                const h = cnvs.height = images[imageID].height;
+                const ctx = cnvs.getContext("2d");
                 ctx.drawImage(images[imageID], 0, 0);
 
-                var imgdata = ctx.getImageData(0, 0, w, h);
-                var rgba = imgdata.data;
+                const imgdata = ctx.getImageData(0, 0, w, h);
+                const rgba = imgdata.data;
 
-                if (offset == 0) {
-                    for (var px = 0, ct = w * h * 4; px < ct; px += 4)
+                if (offset === 0) {
+                    for (let px = 0, ct = w * h * 4; px < ct; px += 4)
                         if (rgba[px + 3]) //no need to recolor pixels that are fully transparent
-                            for (var ch = 0; ch < 3; ++ch)
+                            for (let ch = 0; ch < 3; ++ch)
                                 rgba[px + ch] = Math.max(0, Math.min(255, Math.round(recolorFactors[ch + 3] * 255 + rgba[px + ch] * recolorFactors[ch])));
                 } else {
-                    for (var px = 0, ct = w * h * 4; px < ct; px += 4)
+                    for (let px = 0, ct = w * h * 4; px < ct; px += 4)
                         if (rgba[px + 3])
-                            for (var ch = 0; ch < 3; ++ch)
+                            for (let ch = 0; ch < 3; ++ch)
                                 rgba[px + ch] = Math.max(0, Math.min(255, rgba[px + ch] * recolorFactors[ch + offset]));
                 }
 
@@ -222,7 +223,6 @@ function initCardImageGenerator() {
     }
 
     let nextDrawInstruction = 0;
-
     function queueDraw(time = 1500) {
         if (nextDrawInstruction)
             window.clearTimeout(nextDrawInstruction);
@@ -292,7 +292,7 @@ function initCardImageGenerator() {
     const useCORS = true; // flag to activate loading of external images via CORS helper function -> otherwise canvas is tainted and download button not working
 
     // initialize stage
-    var sources = [
+    const recolorSources = [
         "CardColorOne.png",
         "CardColorTwo.png",
         "CardGray.png",
@@ -322,22 +322,24 @@ function initCardImageGenerator() {
         "MatBannerBottom.png"
         //icons come afterwards
     ];
-    for (let source of sources)
-        recoloredImages.push(false);
+    const recoloredImages = recolorSources.map( _ => undefined);
 
-    const legend = document.getElementById("legend");
-    for (let key in icons) {
-        const li = document.createElement("li");
-        li.textContent = ": " + icons[key][0];
-        const span = document.createElement("span");
-        span.classList.add("def");
-        span.textContent = key.replace("\\", "");
-        li.insertBefore(span, li.firstChild);
-        legend.insertBefore(li, legend.firstChild);
+    function writeIconDescriptions() {
+        const legend = document.getElementById("legend");
+        for (let key in icons) {
+            const li = document.createElement("li");
+            li.textContent = ": " + icons[key][0];
+            const span = document.createElement("span");
+            span.classList.add("def");
+            span.textContent = key.replace("\\", "");
+            li.insertBefore(span, li.firstChild);
+            legend.insertBefore(li, legend.firstChild);
+        }
     }
 
-    for (let key in icons)
-        sources.push(icons[key][0] + ".png");
+    writeIconDescriptions();
+
+    const sources = recolorSources.concat(Object.values(icons).map(x => x[0] + '.png'));
 
     for (let i = 0; i < sources.length; i++) {
         images.push(new Image());
@@ -391,15 +393,12 @@ function initCardImageGenerator() {
         }
     }
 
-    document.getElementById("picture").onchange = function () {
-        onChangeExternalImage(5, this.value);
-    };
-    document.getElementById("expansion").onchange = function () {
-        onChangeExternalImage(17, this.value);
-    };
-
+    const picture = document.getElementById("picture");
+    const expansion = document.getElementById("expansion");
     const customIcon = document.getElementById("custom-icon");
-    onChangeExternalImage(images.length - 1, customIcon.value, 156, 156);
+
+    picture.onchange = function () {onChangeExternalImage(5, this.value);};
+    expansion.onchange = function () {onChangeExternalImage(17, this.value);};
     customIcon.onchange = function () {
         //Last Icon = Custom Icon
         onChangeExternalImage(images.length - 1, this.value, 156, 156);
@@ -449,63 +448,63 @@ function initCardImageGenerator() {
             queueDraw(250);
         };
 
-    //ready to begin: load information from query parameters
-    const query = getQueryParams(document.location.search);
-    for (const key in query) {
-        const value = query[key];
-        switch (key) {
-            case "color0":
-                colorDropdowns[0].selectedIndex = parseInt(value);
-                break;
-            case "color1":
-                colorDropdowns[1].selectedIndex = parseInt(value);
-                break;
-            case "size":
-                const buttonElement = document.getElementsByName("size")[templateSize = parseInt(value)];
-                document.body.className = buttonElement.id;
-                buttonElement.checked = true;
-                break;
-            default:
-                let matches = key.match(/^c(\d)\.(\d)$/);
-                if (matches) {
-                    const id = matches[1];
-                    colorDropdowns[id].selectedIndex = customColorIndex[id];
-                    colorDropdowns[id].nextElementSibling.removeAttribute("style");
-                    recolorFactorList[id][matches[2]] = recolorInputs[12 * id + parseInt(matches[2])].value = parseFloat(value);
-                } else {
-                    matches = key.match(/^c(\d)\.(\d)\.(\d)$/);
+    function loadValuesFromQuery() {
+        const query = getQueryParams(document.location.search);
+        for (const key in query) {
+            const value = query[key];
+            switch (key) {
+                case "color0":
+                    colorDropdowns[0].selectedIndex = parseInt(value);
+                    break;
+                case "color1":
+                    colorDropdowns[1].selectedIndex = parseInt(value);
+                    break;
+                case "size":
+                    const buttonElement = document.getElementsByName("size")[templateSize = parseInt(value)];
+                    document.body.className = buttonElement.id;
+                    buttonElement.checked = true;
+                    break;
+                default:
+                    let matches = key.match(/^c(\d)\.(\d)$/);
                     if (matches) {
-                        alreadyNeededToDetermineCustomAccentColors = true;
                         const id = matches[1];
-                        colorDropdowns[id].selectedIndex = customColorIndex[id] + 1;
+                        colorDropdowns[id].selectedIndex = customColorIndex[id];
                         colorDropdowns[id].nextElementSibling.removeAttribute("style");
-                        colorDropdowns[id].nextElementSibling.nextElementSibling.removeAttribute("style");
-                        recolorFactorList[id][parseInt(matches[2]) * 3 + parseInt(matches[3])] = recolorInputs[12 * id + 3 * parseInt(matches[2]) + parseInt(matches[3])].value = parseFloat(value);
+                        recolorFactorList[id][matches[2]] = recolorInputs[12 * id + parseInt(matches[2])].value = parseFloat(value);
                     } else {
-                        const el = document.getElementById(key);
-                        if (el)
-                            el.value = value;
+                        matches = key.match(/^c(\d)\.(\d)\.(\d)$/);
+                        if (matches) {
+                            alreadyNeededToDetermineCustomAccentColors = true;
+                            const id = matches[1];
+                            colorDropdowns[id].selectedIndex = customColorIndex[id] + 1;
+                            colorDropdowns[id].nextElementSibling.removeAttribute("style");
+                            colorDropdowns[id].nextElementSibling.nextElementSibling.removeAttribute("style");
+                            recolorFactorList[id][parseInt(matches[2]) * 3 + parseInt(matches[3])] = recolorInputs[12 * id + 3 * parseInt(matches[2]) + parseInt(matches[3])].value = parseFloat(value);
+                        } else {
+                            const el = document.getElementById(key);
+                            if (el)
+                                el.value = value;
+                        }
                     }
-                }
-                break;
+                    break;
+            }
+            for (const id of simpleOnChangeButOnlyForSize2InputFieldIDs)
+                if (!document.getElementById(id).value)
+                    document.getElementById(id).value = document.getElementById(id.slice(0, -1)).value;
         }
-        for (const id of simpleOnChangeButOnlyForSize2InputFieldIDs)
-            if (!document.getElementById(id).value)
-                document.getElementById(id).value = document.getElementById(id.slice(0, -1)).value;
     }
+
+    //ready to begin: load information from query parameters
+    loadValuesFromQuery();
     //set the illustration's Source properly and also call queueDraw.
     document.getElementById("picture").onchange();
     document.getElementById("expansion").onchange();
-    document.getElementById("custom-icon").onchange();
+
+    onChangeExternalImage(5, picture.value);
+    onChangeExternalImage(17, expansion.value);
+    onChangeExternalImage(images.length - 1, customIcon.value, 156, 156);
 
     //adjust page title
-    function adjustPageTitle() {
-        let cardTitle = document.getElementById("title").value.trim();
-        let creator = document.getElementById("creator").value.trim();
-        let pageDefaultTitle = "Dominion Card Image Generator";
-        document.title = cardTitle.length > 0 ? (pageDefaultTitle + " - " + cardTitle + " " + creator) : pageDefaultTitle;
-    }
-
     document.getElementById('title').addEventListener('change', adjustPageTitle, false);
     document.getElementById('creator').addEventListener('change', adjustPageTitle, false);
 
@@ -517,9 +516,15 @@ function initCardImageGenerator() {
         window.location.href = this.href + document.location.search;
     }, false);
 
-
     updateIsEachColorDark();
 
+}
+
+function adjustPageTitle() {
+    let cardTitle = document.getElementById("title").value.trim();
+    let creator = document.getElementById("creator").value.trim();
+    let pageDefaultTitle = "Dominion Card Image Generator";
+    document.title = cardTitle.length > 0 ? (pageDefaultTitle + " - " + cardTitle + " " + creator) : pageDefaultTitle;
 }
 
 function getQueryParams(qs) { //http://stackoverflow.com/questions/979975/how-to-get-the-value-from-the-get-parameters
