@@ -109,8 +109,8 @@ function initCardImageGenerator() {
         boldableKeywordsFull.forEach(function (word, index) {
             this[index] = word.trim();
         }, boldableKeywordsFull);
-        boldLinePatternWords = RegExp("(?:([-+]\\d+)\\s+|(\\+))(" + boldableKeywordsFull.join("|") + "s?)", "ig");
-        boldLinePatternWordsSpecial = RegExp("(?:([-+]\\d+)\\s+|(?:(\\d+)\\s+)|(\\+)|)(" + specialBoldableKeywords.join("|") + "s?)", "ig");
+        boldLinePatternWords = RegExp("(?:([-+]\\d+)\\s+|(\\+))(" + boldableKeywordsFull.join("|") + "s?)\\b", "ig");
+        boldLinePatternWordsSpecial = RegExp("(?:([-+]\\d+)\\s+|(?:(\\d+)\\s+)|(\\+)|)(" + specialBoldableKeywords.join("|") + "s?)\\b", "ig");
     }
     var boldLinePatternWords;
     var boldLinePatternWordsSpecial;
@@ -326,7 +326,7 @@ function initCardImageGenerator() {
                         x += halfWidthOfSpaces;
                         word = match[4];
                     } else {
-                        if (word.match(boldLinePatternWords) || word.match(boldLinePatternWordsSpecial)) {
+                        if (family === "myText" && (word.match(boldLinePatternWords) || word.match(boldLinePatternWordsSpecial))) {
                             if (words.length === 1)
                                 context.font = "bold " + boldSize + "pt " + family;
                             else
